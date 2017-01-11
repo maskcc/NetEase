@@ -12,9 +12,9 @@ DEBUG = -g -DDEBUG -D_REENTRANT
 RELEASE = -g -O2
 CPPFLAGS  = $(TARGETINCS) -std=c++11
 LINKFLAGS = $(TARGETLIBS) -lpthread -lrt -lnsl -lgcc_s  -lglog
-TARGETSRCS = $(wildcard $(SRCPATH)/*.c $(SRCPATH)/*.cpp)
+TARGETSRCS = $(wildcard $(SRCPATH)/*.c $(SRCPATH)/*.cc)
 TARGETOBJSRCS = $(subst $(SRCPATH)/, ,$(TARGETSRCS))
-OBJS = $(addprefix $(OBJECTPATH)/, $(patsubst %.c,%.o,$(TARGETOBJSRCS:.cpp=.o)))
+OBJS = $(addprefix $(OBJECTPATH)/, $(patsubst %.c,%.o,$(TARGETOBJSRCS:.cc=.o)))
 
 ifeq ($(strip $(TARGETPATH)),)
     TARGETPATH := .
@@ -30,7 +30,7 @@ else
     CPPFLAGS := $(CPPFLAGS) $(RELEASE)
 endif
 
-$(OBJECTPATH)/%.o : $(SRCPATH)/%.cpp;mkdir -p $(OBJECTPATH);$(CPP) $(CPPFLAGS) -c $< -o $@
+$(OBJECTPATH)/%.o : $(SRCPATH)/%.cc;mkdir -p $(OBJECTPATH);$(CPP) $(CPPFLAGS) -c $< -o $@
 $(OBJECTPATH)/%.o : $(SRCPATH)/%.c;mkdir -p $(OBJECTPATH);$(CPP) $(CPPFLAGS) -c $< -o $@
 
 ifneq ($(TARGETTYPE), 1)
@@ -62,4 +62,4 @@ gdb:
 	cd $(TARGETPATH);gdb $(TARGETNAME)
 	
 w:
-	vim src/main.cpp
+	vim src/main.cc
