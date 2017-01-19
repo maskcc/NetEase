@@ -63,11 +63,17 @@ class Timer
 class DataBuffer
     {
         public:
-            DataBuffer(int32_t sock, int32_t _sz, const char* ptr);
+            //sock, 连接的fd
+            //sz, 包的总长
+            //rsz, real sz, 接收到的包的长度
+            //ptr, 数据地址
+            DataBuffer(int32_t sock, int32_t sz, int32_t rez, const char* ptr);
+            void AddData(int32_t sz, const char* ptr){}
 
         private:
-            int32_t  sock_; //文件描述符
-            int32_t sz_;    //数据包大小
+            int32_t  sock_;  //文件描述符
+            int32_t  sz_;    //数据包大小
+            int32_t  pos_;   //当前发送的字节下标
             std::vector<uint8_t> buf_;
 
     };
@@ -194,11 +200,13 @@ class Socket
     public:
         bool Send();    //发送消息
         bool Receive(); //接收消息
-    public:
+    private:
         int32_t fd_;         //链接信息
         std::string  addr_;  //地址
         int32_t port_;       //端口
         int64_t id_;         //唯一标识符
+        
+
 
 };
 using SocketPtr = std::shared_ptr<Socket>;
@@ -245,7 +253,7 @@ class TCPEvent
 {
     public:
         TCPEvent();
-        Proc();             //处理
+        void Proc();             //处理
 
 
     private:
@@ -255,7 +263,7 @@ class TCPEvent
         SocketPtr sock_; //当前连接
 
 
-}
+};
 
 class EPOLLSvr
 {

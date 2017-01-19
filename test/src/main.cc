@@ -75,7 +75,7 @@ void testQ()
     m.Init(3000000);
     auto f1 = [&m]{
         for(;;){
-            auto data = make_shared<DataBuffer>(7, 12, "abcsw 321jj");
+            auto data = make_shared<DataBuffer>(7, 12, 12,"abcsw 321jj");
             m.Put(data);
             
             //this_thread::sleep_for(std::chrono::seconds(3));

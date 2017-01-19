@@ -46,10 +46,11 @@ uint32_t Timer::GetNextExpireTime() {
 }
 
 //DataBuffer
-DataBuffer::DataBuffer(int32_t s, int32_t sz, const char* ptr) {
+DataBuffer::DataBuffer(int32_t s, int32_t sz, int32_t rsz, const char* ptr) {
     buf_.resize(sz);
     sz_ = sz;
     sock_ = s;
+    pos_ = rsz;
     memcpy(&buf_[0], ptr, sz);
 
 }
