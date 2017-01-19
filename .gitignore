@@ -3,10 +3,7 @@
 *.lo
 *.o
 *.obj
-<<<<<<< HEAD
 *.d
-=======
->>>>>>> 23ddd87c88156d69521dcb04c358053fffd6c5b9
 
 # Precompiled Headers
 *.gch
@@ -31,10 +28,7 @@
 *.exe
 *.out
 *.app
-<<<<<<< HEAD
 core.*
 libs/*
 *.run
 LOG_*
-=======
->>>>>>> 23ddd87c88156d69521dcb04c358053fffd6c5b9
