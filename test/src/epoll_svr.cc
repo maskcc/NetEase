@@ -88,7 +88,7 @@ MONITOR MONITOR_SVR;
         } else {
             fd = socket(AF_INET, SOCK_STREAM, 0);
         }
-        //SetNonBlock(fd);
+        SetNonBlock(fd);
         if(reuse){
             SetReuse(fd);
         }

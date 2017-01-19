@@ -27,6 +27,8 @@
 
 #include <glog/logging.h>
 
+const int32_t MAX_EVENTS = 128;
+
 //定时器
 //定时执行过程, 能够添加过程, 删除过程
 //写在主线程中, 能处理主线程数据, 在epoll里处理, epoll超时为 1秒
@@ -187,12 +189,27 @@ class IPlayer
 };
 //连接信息的智能指针
 using IPlayerPtr = std::shared_ptr<IPlayer>;
+class Socket
+{
+    public:
+        bool Send();    //发送消息
+        bool Receive(); //接收消息
+    public:
+        int32_t fd_;         //链接信息
+        std::string  addr_;  //地址
+        int32_t port_;       //端口
+        int64_t id_;         //唯一标识符
 
+};
+using SocketPtr = std::shared_ptr<Socket>;
+
+//已连接的服务器
 class TCPSocket : public IPlayer
 {
 
 };
 
+//监听服务器
 class TCPAccept : public IPlayer
 {
 
@@ -206,18 +223,51 @@ class UDPSocket : public IPlayer
 
 class TCPConnector : public IPlayer
 {
+    public:
+        //自动重连 
+        void OnReconnect(){}
+    private:
+        //是否进行重连
+        bool do_reconn_; 
+        //重连时间
+        int32_t reconn_time_; 
+        //重连次数
+        int32_t reconn_count_; 
+        //最多重连次数
+        int32_t max_reconn_count_; 
 
 };
+
+//定义 epoll_event
+using EPOLL_EV = struct epoll_event;
+//epoll net event
+class TCPEvent
+{
+    public:
+        TCPEvent();
+        Proc();             //处理
+
+
+    private:
+        EPOLL_EV ev_;
+        bool read_able_;    //可读
+        bool write_able_;   //可写
+        SocketPtr sock_; //当前连接
+
+
+}
 
 class EPOLLSvr
 {
     public:
         bool SendMessage(IPlayerPtr player, void *msg, int32_t sz);
         bool Connect(std::string dest, bool reconnect); //是否重连
+        int32_t Wait();
     private:
         int32_t epoll_fd_; //epoll fd, 用来监听发送接收消息的
         std::map<uint64_t, IPlayerPtr> player_map_; //所有连接信息都在这
-        Timer timer;
+        Timer timer_;
+        EPOLL_EV events_[MAX_EVENTS];
 
 };
 class NetPackage
