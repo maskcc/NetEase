@@ -1,63 +1,77 @@
 #include "epoll_svr.h"
 
 //timer
-Timer::Timer() {
+    Timer::Timer() {
 
-}
-
-Timer::~Timer() {
-
-}
-
-uint64_t Timer::CreateTimer(uint64_t tick, const _OnTimerHandler& h) {
-    return CreateTimer(tick, bind(h));
-}
-
-uint64_t Timer::CreateTimer(uint64_t tick, _OnTimerHandler &&h) {
-    uint64_t t = GetSysTick() - this->start_sys_time_;
-    //超时距离 startSysTime 的时间差为 t
-    t += tick;
-    _OnTimerHandler *pFunc = new _OnTimerHandler(std::move(h));
-    timer_map_.insert(make_pair(t, pFunc));
-    return t;
-}
-
-bool Timer::CancelTimer(uint64_t id) {
-
-}
-
-void Timer::CheckTimer() {
-
-}
-
-uint64_t Timer::GetSysTick() {
-    return (uint64_t)(std::chrono::duration_cast<std::chrono::milliseconds> (std::chrono::system_clock::now().time_since_epoch()).count());
-
-}
-
-uint32_t Timer::GetNextExpireTime() {
-    uint32_t tm = -1;
-    if(!timer_map_.empty()) {
-        tm = timer_map_.begin()->first - GetSysTick() - start_sys_time_;
     }
-    tm = std::min(tm, 100U);
-    return tm;
 
-}
+    Timer::~Timer() {
+
+    }
+
+    uint64_t Timer::CreateTimer(uint64_t tick, const _OnTimerHandler& h) {
+        return CreateTimer(tick, bind(h));
+    }
+
+    uint64_t Timer::CreateTimer(uint64_t tick, _OnTimerHandler &&h) {
+        uint64_t t = GetSysTick() - this->start_sys_time_;
+        //超时距离 startSysTime 的时间差为 t
+        t += tick;
+        _OnTimerHandler *pFunc = new _OnTimerHandler(std::move(h));
+        timer_map_.insert(make_pair(t, pFunc));
+        return t;
+    }
+
+    bool Timer::CancelTimer(uint64_t id) {
+
+    }
+
+    void Timer::CheckTimer() {
+
+    }
+
+    uint64_t Timer::GetSysTick() {
+        return (uint64_t)(std::chrono::duration_cast<std::chrono::milliseconds> (std::chrono::system_clock::now().time_since_epoch()).count());
+
+    }
+
+    uint32_t Timer::GetNextExpireTime() {
+        uint32_t tm = -1;
+        if(!timer_map_.empty()) {
+            tm = timer_map_.begin()->first - GetSysTick() - start_sys_time_;
+        }
+        tm = std::min(tm, 100U);
+        return tm;
+
+    }
 
 //DataBuffer
-DataBuffer::DataBuffer(int32_t s, int32_t sz, int32_t rsz, const char* ptr) {
-    buf_.resize(sz);
-    sz_ = sz;
-    sock_ = s;
-    pos_ = rsz;
-    memcpy(&buf_[0], ptr, sz);
+    DataBuffer::DataBuffer(int32_t s, int32_t sz) {
+        buf_.resize(sz);
+        sz_    = sz;
+        sock_  = s;
+        pos_   = 0;
+    }
+    int32_t DataBuffer::AddData(int32_t sz, const char * ptr) {
+        if(pos_ + sz > sz_){
+            //错误, 数据长度不对
+            return -1;
+        }
+        memcpy(&buf_[pos_], ptr, sz);
+        pos_ += sz;
+        return sz_ - pos_;
+    }
+    int32_t DataBuffer::NeedData() {
+        int32_t len = sz_ - pos_;
+        if(len < 0){
+            return -1;
+        }
+        return len;
 
-}
+    }
 
 //统计信息
 MONITOR MONITOR_SVR;
-
 
 //网络的包装函数
     bool NetPackage::IsIPV6(const std::string& ip) {
@@ -232,3 +246,82 @@ MONITOR MONITOR_SVR;
     }
 
 
+//Socket
+    Socket::Socket() {
+        fd_ = NetPackage::kINVALID_FD;
+        addr_ = "";
+        port_ = -1;
+    }
+
+//IPlayer
+    IPlayer::IPlayer() {
+        identify_ = -1;
+    }
+    IPlayer::~IPlayer() {
+    }
+    void IPlayer::OnNetMessage() {
+    }
+    bool IPlayer::Send() {
+    }
+
+
+//TCPEvent
+    TCPEvent::TCPEvent() {
+    }
+    void TCPEvent::Proc() {
+    }
+    void TCPEvent::SetPlayer(IPlayerPtr ptr) {
+        player_ = ptr;
+    }
+
+
+//EPOLLSvr
+    EPOLLSvr::~EPOLLSvr() {
+
+        close(epoll_fd_);
+    }
+
+    bool EPOLLSvr::Init(uint16_t port, int32_t max_connection, int32_t window, bool nodelay) {
+        epoll_fd_ = epoll_create(max_connection);
+        if(NetPackage::kINVALID_FD == epoll_fd_){
+            LOG(FATAL) << "epoll create fail";
+        }
+        TCPAcceptPtr acceptor = std::make_shared<TCPAccept>(port);
+        TCPEventPtr event = make_shared<TCPEvent>();
+        event.get()->SetPlayer(acceptor);
+        // 增加引用计数
+        //events_map_.insert(, event);
+
+        EPOLL_EV ev = {0};
+        ev.events = EPOLLIN;
+        ev.data.ptr = event.get();
+
+    }
+
+    bool EPOLLSvr::SendMessage(IPlayerPtr player, void* msg, int32_t sz) {
+
+    }
+    bool EPOLLSvr::Connect(std::string dest, bool reconnect) {
+
+    }
+
+    int32_t EPOLLSvr::Wait() {
+    }
+
+
+//TCPSocket 已连接的服务器
+    TCPSocket::TCPSocket() {
+
+    }
+
+//TCPAccept
+    TCPAccept::TCPAccept(int32_t port) {
+        port_ = port;
+    }
+    bool TCPAccept::Listen( bool reuse) {
+        if(!NetPackage::Listen(&peer_.fd_, "0.0.0.0", port_, reuse)){
+            LOG(FATAL) << "Listen failed on port " << port_ ;
+        }
+    }
+    TCPAccept::~TCPAccept() {
+    }

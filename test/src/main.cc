@@ -75,7 +75,8 @@ void testQ()
     m.Init(3000000);
     auto f1 = [&m]{
         for(;;){
-            auto data = make_shared<DataBuffer>(7, 12, 12,"abcsw 321jj");
+            auto data = make_shared<DataBuffer>(7, 12);
+            data.get()->AddData(12, "abcsw 321jj");
             m.Put(data);
             
             //this_thread::sleep_for(std::chrono::seconds(3));
@@ -152,7 +153,7 @@ void test_sock_utils()
             ret = NetPackage::Connect(&fd, "127.0.0.1", 19977);
             if(ret){
                 LOG(INFO) << count << ". connect succeed, fd:" << fd << endl;
-//                this_thread::sleep_for(std::chrono::seconds(1));
+                this_thread::sleep_for(std::chrono::seconds(1));
                 NetPackage::Read(fd, buff, 64);
                 LOG(INFO) << "svr said:" << buff;
                 NetPackage::Close(fd);
