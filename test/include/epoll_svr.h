@@ -88,6 +88,13 @@ class Timer
         };
     using DataBufferPtr = std::shared_ptr<DataBuffer>;
 
+//获取下一个id 
+    static uint64_t next_id(){
+        static uint64_t id = 0;
+        ++id;
+        return id;
+    }
+
 //一些统计信息 MONITOR
     class MONITOR
     {
@@ -200,9 +207,7 @@ class SafeQueue
             bool Send();    //发送消息
             bool Receive(); //接收消息
         public:
-            int32_t fd_;         //链接信息
             std::string  addr_;  //地址
-            int32_t port_;       //端口
     };
     using SocketPtr = std::shared_ptr<Socket>;
 
@@ -212,8 +217,9 @@ class SafeQueue
         public:
             IPlayer();
             virtual ~IPlayer();
-            virtual void OnNetMessage();
+            virtual void OnNetMessage(int32_t fd);
             virtual bool Send();
+            virtual uint64_t getID();
         public:
             Socket   peer_;    //连接信息
         private:
@@ -238,7 +244,8 @@ class SafeQueue
     {
         public:
             TCPAccept(int32_t port);
-            bool Listen(bool reuse = true);
+            bool Listen(int32_t &fd, bool reuse = true);
+            virtual void OnNetMessage(int32_t fd);
             ~TCPAccept();
         private:
             int32_t port_; //监听的端口号
@@ -280,26 +287,33 @@ using EPOLL_EV = struct epoll_event;
             TCPEvent();
             void Proc();             //处理
             void SetPlayer(IPlayerPtr ptr);
+            uint64_t getID();
+        public:            
+            EPOLL_EV ev_;       //epoll 事件指针
+            int32_t fd_;        //连接的fd
+            IPlayerPtr player_; //与事件关联的角色
         private:
             bool read_able_;    //可读
             bool write_able_;   //可写
-            IPlayerPtr player_; //与事件关联的角色
 
     };
-    using TCPEventPtr = shared_ptr<TCPEvent>;
+    using TCPEventPtr = std::shared_ptr<TCPEvent>;
 
 //EPOLLSvr
     class EPOLLSvr
     {
         public:
             ~EPOLLSvr();
+            EPOLLSvr();
             //初始化
             //port 端口号, max_connection 最大连接数, window 接收发送窗口, 默认2048, nodelay 不延迟, 默认true
             bool Init(uint16_t port, int32_t max_connection, int32_t window = 2048, bool nodelay = true);  
+            bool Start();
             bool SendMessage(IPlayerPtr player, void *msg, int32_t sz);
             bool Connect(std::string dest, bool reconnect); //是否重连
             int32_t Wait();
-            int32_t Svc();
+            int32_t Svc(int32_t c);
+            bool RegEvent(int32_t op, TCPEventPtr ev);
             
         private:
             int32_t epoll_fd_; //epoll fd, 用来监听发送接收消息的
@@ -307,7 +321,9 @@ using EPOLL_EV = struct epoll_event;
             std::map<uint64_t, TCPEventPtr> events_map_; //保存消息的地图, key是指向事件的指针地址
             Timer timer_;
             EPOLL_EV events_[MAX_EVENTS];
+            uint64_t ev_ids_[MAX_EVENTS]; //记录事件的id
             char buff_[MAX_SOCK_BUFF]; //接收网络消息的最大长度为 64K, 不用清零, 使用时直接覆盖 
+            bool stop_;                //是否已经停止
 
     };
 

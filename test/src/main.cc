@@ -171,6 +171,14 @@ void test_sock_utils()
 
 }
 
+void test_epoll() {
+    EPOLLSvr svr;
+    svr.Init(30077, 3000);
+    svr.Start();
+
+
+}
+
 
 int main(int argc, char* argv[])
 {
@@ -179,7 +187,8 @@ int main(int argc, char* argv[])
     //chrono_test();
     //testVec();
     //testQ();
-    test_sock_utils();
+    //test_sock_utils();
+    test_epoll();
     //testMap();
 
 
