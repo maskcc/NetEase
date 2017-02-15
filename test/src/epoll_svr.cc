@@ -124,7 +124,7 @@ MONITOR MONITOR_SVR;
             addr.sin_addr.s_addr = INADDR_ANY;
             addr.sin_port = htons(port);
             if(bind(fd, (sockaddr *)&addr, sizeof(addr)) != 0){
-                //LOG(ERROR)
+                LOG(ERROR) << "errno[" << errno << "]" << " info[" << strerror(errno) << "]";
                 ::close(fd);
                 return false;
             }
@@ -249,15 +249,17 @@ MONITOR MONITOR_SVR;
 //Socket
     Socket::Socket() {
         addr_ = "";
+        fd_ = NetPackage::kINVALID_FD;
+        port_ = -1;
     }
 
 //IPlayer
-    IPlayer::IPlayer() {
+    IPlayer::IPlayer() {        
         identify_ = next_id();
     }
     IPlayer::~IPlayer() {
     }
-    void IPlayer::OnNetMessage(int32_t fd) {
+    void IPlayer::OnNetMessage() {
     }
     bool IPlayer::Send() {
     }
@@ -267,10 +269,10 @@ MONITOR MONITOR_SVR;
 
 
 //TCPEvent
-    TCPEvent::TCPEvent() {
-        fd_ = NetPackage::kINVALID_FD;
+    TCPEvent::TCPEvent() {        
         read_able_ = false;
         write_able_ = false;
+        fd_ = NetPackage::kINVALID_FD;
     }
     void TCPEvent::Proc() {
         int32_t event = ev_.events;
@@ -287,11 +289,9 @@ MONITOR MONITOR_SVR;
         return;
 
     }
-    uint64_t TCPEvent::getID() {
-        return player_.get()->getID();
-    }
-    void TCPEvent::SetPlayer(IPlayerPtr ptr) {
-        player_ = ptr;
+   
+    void TCPEvent::SetPlayer(uint64_t id) {
+        player_id_ = id;
     }
 
 
@@ -306,21 +306,27 @@ MONITOR MONITOR_SVR;
         close(epoll_fd_);
     }
 
-    bool EPOLLSvr::Init(uint16_t port, int32_t max_connection, int32_t window, bool nodelay) {
+    bool EPOLLSvr::Init(uint16_t port, int32_t max_connection,  On_Accept_Handler h, int32_t window, bool nodelay) {
         epoll_fd_ = epoll_create(max_connection);
         if(NetPackage::kINVALID_FD == epoll_fd_){
             LOG(FATAL) << "epoll create fail";
             return false;
         }
 
-        TCPAcceptPtr acceptor = std::make_shared<TCPAccept>(port);
-        TCPEventPtr event = std::make_shared<TCPEvent>();
-        event.get()->SetPlayer(acceptor);
-
-        event.get()->ev_.events = EPOLLIN;
-        event.get()->ev_.data.ptr= event.get();
-        events_map_[acceptor.get()->getID()] = event;
-        acceptor.get()->Listen(event.get()->fd_);
+        auto acceptor = std::make_shared<TCPAccept>(port);
+        auto event = std::make_shared<TCPEvent>();
+        auto acc = acceptor.get();
+        auto ev = event.get();
+        
+        acc->SetHandler(h);
+        ev->SetPlayer(acc->getID());
+        ev->ev_.events = EPOLLIN;
+        ev->ev_.data.ptr= ev;
+        events_map_[acc->getID()] = event;
+        player_map_[acc->getID()] = acceptor;
+        acc->Listen();
+        ev->fd_ = acc->peer_.fd_;
+        
         RegEvent(EPOLL_CTL_ADD, event);
 
         return true;
@@ -351,20 +357,18 @@ MONITOR MONITOR_SVR;
 
     }
 
-    int32_t EPOLLSvr::Svc(int32_t c) {
+    int32_t EPOLLSvr::Svc(int32_t c) {        
         for(int i = 0; i < c; ++i) {
             TCPEventPtr e = events_map_[ev_ids_[i]];
             if( nullptr == e.get() ){
                 LOG(ERROR) << "event is nullptr";
                 return -1;
             }
-            e.get()->player_.get()->OnNetMessage(e.get()->fd_);
+            player_map_[e.get()->player_id_]->OnNetMessage();
 
         }
-
         return 0;
-
-
+        
     }
 
     int32_t EPOLLSvr::Wait() {
@@ -388,7 +392,7 @@ MONITOR MONITOR_SVR;
         for(int c = 0; c < ret; ++c) {
             TCPEvent* e = (TCPEvent*) events_[c].data.ptr;
             e->Proc();
-            ev_ids_[c] = e->getID();
+            ev_ids_[c] = e->player_id_;
 
         }
         return ret;
@@ -402,23 +406,31 @@ MONITOR MONITOR_SVR;
 
 //TCPAccept
     TCPAccept::TCPAccept(int32_t port) {
-        port_ = port;
+        peer_.port_ = port;
+        accept_handler_ = nullptr;
     }
-    bool TCPAccept::Listen(int32_t &fd, bool reuse) {
-        if(!NetPackage::Listen(&fd, "0.0.0.0", port_, reuse)){
-            LOG(FATAL) << "Listen failed on port " << port_ ;
+    void TCPAccept::setHandler(On_Accept_Handler h){
+        accept_handler_ = h;
+        
+    }
+    bool TCPAccept::Listen(bool reuse) {
+        if(!NetPackage::Listen(&peer_.fd_, "0.0.0.0", peer_.port_, reuse)){
+            LOG(FATAL) << "Listen failed on port " << peer_.port_ ;
             return false;
         }
+        LOG(INFO) << "Listen success on port [" << peer_.port_ << "] fd[" << peer_.fd_ << "]";
         return true;
     }
     TCPAccept::~TCPAccept() {
     }
-    void TCPAccept::OnNetMessage(int32_t fd) {
+    void TCPAccept::OnNetMessage() {
         int32_t cliFD = NetPackage::kINVALID_FD;
         std::string ip;
         uint16_t port;
-        NetPackage::Accept( fd, &cliFD, &ip, &port);
+        NetPackage::Accept( peer_.fd_, &cliFD, &ip, &port);
         LOG(INFO) << "accept succed fd[" << cliFD << "] ip[" << ip << "] port[" << port << "]";
+        auto f = accept_handler_;
+        f(cliFD);
         NetPackage::Close(cliFD);
         
 
