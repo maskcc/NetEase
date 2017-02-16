@@ -243,7 +243,7 @@ class SafeQueue
     using TCPSocketPtr = std::shared_ptr<TCPSocket>;
     
     
-    using On_Accept_Handler = std::function<int(int)>;
+    using On_Accept_Handler = std::function<void(uint64_t)>;
 //监听服务器
     class TCPAccept : public IPlayer
     {
@@ -253,7 +253,7 @@ class SafeQueue
             virtual void OnNetMessage();
             ~TCPAccept();
             
-            void setHandler(On_Accept_Handler h);
+            void SetHandler(On_Accept_Handler h);
         private:            
             On_Accept_Handler accept_handler_;  //接收事件后的回调函数
 

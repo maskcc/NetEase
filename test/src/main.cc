@@ -170,15 +170,21 @@ void test_sock_utils()
     th2.join();
 
 }
+int32_t count = 0;
+auto on_accept = [&count](int32_t id) mutable {
+    LOG(INFO) << "on_accept id[" << id << "] cout [" << count++ << "]" ;    
+
+};
 
 void test_epoll() {
     EPOLLSvr svr;
-    svr.Init(30077, 3000);
+    auto m = on_accept;
+    svr.Init(30077, 3000, m);
+    
     svr.Start();
 
 
 }
-
 
 int main(int argc, char* argv[])
 {

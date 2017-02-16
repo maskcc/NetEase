@@ -320,7 +320,7 @@ MONITOR MONITOR_SVR;
         
         acc->SetHandler(h);
         ev->SetPlayer(acc->getID());
-        ev->ev_.events = EPOLLIN;
+        ev->ev_.events = EPOLLIN | EPOLLET;
         ev->ev_.data.ptr= ev;
         events_map_[acc->getID()] = event;
         player_map_[acc->getID()] = acceptor;
@@ -409,7 +409,7 @@ MONITOR MONITOR_SVR;
         peer_.port_ = port;
         accept_handler_ = nullptr;
     }
-    void TCPAccept::setHandler(On_Accept_Handler h){
+    void TCPAccept::SetHandler(On_Accept_Handler h){
         accept_handler_ = h;
         
     }
@@ -427,11 +427,13 @@ MONITOR MONITOR_SVR;
         int32_t cliFD = NetPackage::kINVALID_FD;
         std::string ip;
         uint16_t port;
-        NetPackage::Accept( peer_.fd_, &cliFD, &ip, &port);
-        LOG(INFO) << "accept succed fd[" << cliFD << "] ip[" << ip << "] port[" << port << "]";
-        auto f = accept_handler_;
-        f(cliFD);
-        NetPackage::Close(cliFD);
+        while(NetPackage::Accept( peer_.fd_, &cliFD, &ip, &port)){
+        
+            //LOG(INFO) << "accept succed fd[" << cliFD << "] ip[" << ip << "] port[" << port << "]";
+            auto f = accept_handler_;
+            f(this->getID());
+            //NetPackage::Close(cliFD);
+        }
         
 
     }
