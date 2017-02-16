@@ -170,18 +170,17 @@ void test_sock_utils()
     th2.join();
 
 }
-int32_t count = 0;
-auto on_accept = [&count](int32_t id) mutable {
-    LOG(INFO) << "on_accept id[" << id << "] cout [" << count++ << "]" ;    
+auto count = make_shared<int32_t>(0);
+auto on_accept = [](int32_t id)  {
+    LOG(INFO) << "on_accept id[" << id << "] cout [" << (*count.get())++ << "]" ;    
 
 };
 
 void test_epoll() {
-    EPOLLSvr svr;
+    EPOLLSvrPtr svr = std::make_shared<EPOLLSvr>();
     auto m = on_accept;
-    svr.Init(30077, 3000, m);
-    
-    svr.Start();
+    svr.get()->Init(30077, 3000, m);    
+    svr.get()->Start();
 
 
 }

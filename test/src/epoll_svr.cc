@@ -266,7 +266,12 @@ MONITOR MONITOR_SVR;
     uint64_t IPlayer::getID() {
         return identify_;
     }
-
+    void IPlayer::KickOut() {
+        NetPackage::Close(peer_.fd_);
+    }
+    void IPlayer::SetHandler(On_Accept_Handler h){
+        
+    }
 
 //TCPEvent
     TCPEvent::TCPEvent() {        
@@ -298,6 +303,9 @@ MONITOR MONITOR_SVR;
 //EPOLLSvr
     EPOLLSvr::EPOLLSvr(){
         stop_ = false;
+        now_connections_ = 0;
+        max_connections_ = 1000;   //默认最大连接数量1000
+        time_out_ = 30;            //默认30秒超时
         memset(ev_ids_, 0, sizeof(ev_ids_));
         memset(buff_, 0, sizeof(buff_));
     }
@@ -306,40 +314,69 @@ MONITOR MONITOR_SVR;
         close(epoll_fd_);
     }
 
-    bool EPOLLSvr::Init(uint16_t port, int32_t max_connection,  On_Accept_Handler h, int32_t window, bool nodelay) {
+    bool EPOLLSvr::Init(uint16_t port, int32_t max_connection,  On_Accept_Handler h, int32_t timeout, int32_t window, bool nodelay) {
         epoll_fd_ = epoll_create(max_connection);
         if(NetPackage::kINVALID_FD == epoll_fd_){
             LOG(FATAL) << "epoll create fail";
             return false;
         }
-
-        auto acceptor = std::make_shared<TCPAccept>(port);
-        auto event = std::make_shared<TCPEvent>();
-        auto acc = acceptor.get();
-        auto ev = event.get();
         
-        acc->SetHandler(h);
-        ev->SetPlayer(acc->getID());
-        ev->ev_.events = EPOLLIN | EPOLLET;
-        ev->ev_.data.ptr= ev;
-        events_map_[acc->getID()] = event;
-        player_map_[acc->getID()] = acceptor;
-        acc->Listen();
-        ev->fd_ = acc->peer_.fd_;
+        max_connections_ = max_connection;
+        time_out_ = timeout;
+        LOG(INFO) << "最大连接数量[" << max_connection << "]";
+        auto acceptor = std::make_shared<TCPAccept>(port, shared_from_this()); 
+        acceptor.get()->SetHandler(h);
+        acceptor.get()->Listen();
         
-        RegEvent(EPOLL_CTL_ADD, event);
-
-        return true;
+        // 疑问:可不可以先注册事件再listen, epoll 不不会出错?
+        return RegEvent(EPOLL_CTL_ADD,EPOLLIN,  acceptor);
 
     }
-    bool EPOLLSvr::RegEvent(int32_t op, TCPEventPtr ev){
-        if( 0 != epoll_ctl(epoll_fd_, op, ev.get()->fd_, &(ev.get()->ev_))) {
+    
+    //op , option, 是EPOLL_CTL_ADD 或 EPOLL_CTL_MOD 或  EPOLL_CTL_DEL
+    //event, 监听的事件类型, 是 EPOLLIN , 或 EPOLLOUT
+    bool EPOLLSvr::RegEvent(int32_t op, int32_t event, IPlayerPtr player){
+        auto tcpev = std::make_shared<TCPEvent>();
+        auto pl = player.get();        
+        auto ev = tcpev.get();        
+        
+        ev->SetPlayer(pl->getID());
+        ev->ev_.events = event;
+        ev->ev_.data.ptr= ev;
+        ev->fd_ = pl->peer_.fd_;
+        events_map_[pl->getID()] = tcpev;
+        player_map_[pl->getID()] = player;
+        
+        if( 0 != epoll_ctl(epoll_fd_, op, ev->fd_, &(ev->ev_))) {
+            LOG(ERROR) << "epoll_ctl fail fd[" << ev->fd_ << "]"; 
             return false;
         }
         return true;
 
     }
 
+    bool EPOLLSvr::AddConnection(IPlayerPtr player){
+        if(nullptr == player.get()){
+            LOG(ERROR) << "player is nullptr";
+            return false;
+        }
+        if( now_connections_ >= max_connections_ ){
+            LOG(WARNING) << "too many connections now[" << now_connections_ << "] max[" << max_connections_ << "]";
+            //TODO 还应该将 player关闭掉 
+            player.get()->KickOut();            
+            return false;
+        }
+        
+        ++now_connections_;
+        if(!RegEvent(EPOLL_CTL_ADD, EPOLLIN | EPOLLOUT, player)){
+            LOG(ERROR) << "regevent fail";
+            return false;
+        }        
+        player_map_[player.get()->getID()] = player;
+        
+        return true;
+        
+    }
     bool EPOLLSvr::Start() {
         //返回事件的数量
         int32_t c = 0;
@@ -385,8 +422,7 @@ MONITOR MONITOR_SVR;
                 return 0;
             }else{
                 return ret;
-            }
-            LOG(INFO) << "msg come";
+            }           
         }
 
         for(int c = 0; c < ret; ++c) {
@@ -401,13 +437,31 @@ MONITOR MONITOR_SVR;
 
 //TCPSocket 已连接的服务器
     TCPSocket::TCPSocket() {
-
+        socket_handler_ = nullptr;
+    }
+    void TCPSocket::SetHandler(On_Accept_Handler h){
+        socket_handler_ = h;
+        
+    }
+    
+    void TCPSocket::OnNetMessage(){
+      
+        char buff[1024] = {0};
+        int32_t ret = NetPackage::Read(peer_.fd_, buff, 1024);
+        if(0 == ret){            
+            LOG(INFO) << "connection closed by peer fd[" << peer_.fd_ << "]";
+            this->KickOut();
+            return;
+        }
+        LOG(INFO) << "receive data[" << buff << "]";
+        
     }
 
 //TCPAccept
-    TCPAccept::TCPAccept(int32_t port) {
+    TCPAccept::TCPAccept(int32_t port, EPOLLSvrPtr s) {
         peer_.port_ = port;
         accept_handler_ = nullptr;
+        svr_ = s;
     }
     void TCPAccept::SetHandler(On_Accept_Handler h){
         accept_handler_ = h;
@@ -425,15 +479,25 @@ MONITOR MONITOR_SVR;
     }
     void TCPAccept::OnNetMessage() {
         int32_t cliFD = NetPackage::kINVALID_FD;
-        std::string ip;
-        uint16_t port;
-        while(NetPackage::Accept( peer_.fd_, &cliFD, &ip, &port)){
+        std::string ip = "";
+        uint16_t port = 0;
         
-            //LOG(INFO) << "accept succed fd[" << cliFD << "] ip[" << ip << "] port[" << port << "]";
-            auto f = accept_handler_;
-            f(this->getID());
-            //NetPackage::Close(cliFD);
-        }
+        bool ret = NetPackage::Accept( peer_.fd_, &cliFD, &ip, &port);
+        if(false == ret){
+            // 可能会有问题, 当只是发生了 eintr 或者其他错误时, 还有没接收的连接
+            //LOG(INFO) << "accept fail" ;
+            return;
+        }   
+            
+        TCPSocketPtr sock = std::make_shared<TCPSocket>();
+        auto client = sock.get();
+        client->peer_.addr_ = std::move(ip);
+        client->peer_.fd_ = cliFD;
+        client->peer_.port_ = port;            
+        //添加新连接
+        svr_.get()->AddConnection(sock);
+            
+        auto f = accept_handler_;
+        f(client->getID());
         
-
     }
