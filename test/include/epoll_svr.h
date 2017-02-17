@@ -38,10 +38,11 @@ using On_Accept_Handler = std::function<void(uint64_t)>;
 using On_Socket_Handler = std::function<void(uint64_t, int32_t)>;
 //定时器
 //定时执行过程, 能够添加过程, 删除过程
-//写在主线程中, 能处理主线程数据, 在epoll里处理, epoll超时为 1秒
+//写在主线程中, 能处理主线程数据, 在epoll里处理, epoll超时单位为毫秒
 using _OnTimerHandler = std::function<void()>;
 class Timer
     {
+        //epoll_wait 是毫秒级别的timeout
         public:
             Timer();
             ~Timer();
@@ -284,11 +285,12 @@ class SafeQueue
     };
     using UDPSocketPtr = std::shared_ptr<UDPSocket>;
 
-    class TCPConnector : public IPlayer
+    class TCPConnection : public IPlayer
     {
         public:
             //自动重连 
             void OnReconnect(){}
+            bool Connect(){}
         private:
             //是否进行重连
             bool do_reconn_; 
@@ -300,7 +302,7 @@ class SafeQueue
             int32_t max_reconn_count_; 
 
     };
-    using TCPConnectorPtr = std::shared_ptr<TCPConnector>;
+    using TCPConnectorPtr = std::shared_ptr<TCPConnection>;
 
 //定义 epoll_event
 using EPOLL_EV = struct epoll_event;

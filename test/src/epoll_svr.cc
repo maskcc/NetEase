@@ -415,6 +415,7 @@ MONITOR MONITOR_SVR;
         
     }
 
+    //毫秒级别的timeout
     int32_t EPOLLSvr::Wait() {
         //TODO add timer here
         int32_t ret = epoll_wait(epoll_fd_, events_, MAX_EVENTS, -1);
