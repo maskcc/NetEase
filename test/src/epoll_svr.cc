@@ -53,6 +53,7 @@
         pos_   = 0;
     }
     int32_t DataBuffer::AddData(int32_t sz, const char * ptr) {
+        //至少要先把长度发过来
         if(pos_ + sz > sz_){
             //错误, 数据长度不对
             return -1;
@@ -272,6 +273,9 @@ MONITOR MONITOR_SVR;
     void IPlayer::SetHandler(On_Accept_Handler h){
         
     }
+    void IPlayer::SetHandler(On_Socket_Handler h){
+        
+    }
 
 //TCPEvent
     TCPEvent::TCPEvent() {        
@@ -306,6 +310,7 @@ MONITOR MONITOR_SVR;
         now_connections_ = 0;
         max_connections_ = 1000;   //默认最大连接数量1000
         time_out_ = 30;            //默认30秒超时
+        sock_handler_ = nullptr;
         memset(ev_ids_, 0, sizeof(ev_ids_));
         memset(buff_, 0, sizeof(buff_));
     }
@@ -314,7 +319,7 @@ MONITOR MONITOR_SVR;
         close(epoll_fd_);
     }
 
-    bool EPOLLSvr::Init(uint16_t port, int32_t max_connection,  On_Accept_Handler h, int32_t timeout, int32_t window, bool nodelay) {
+    bool EPOLLSvr::Init(uint16_t port, int32_t max_connection,  On_Accept_Handler h1, On_Socket_Handler h2, int32_t timeout, int32_t window, bool nodelay) {
         epoll_fd_ = epoll_create(max_connection);
         if(NetPackage::kINVALID_FD == epoll_fd_){
             LOG(FATAL) << "epoll create fail";
@@ -325,8 +330,9 @@ MONITOR MONITOR_SVR;
         time_out_ = timeout;
         LOG(INFO) << "最大连接数量[" << max_connection << "]";
         auto acceptor = std::make_shared<TCPAccept>(port, shared_from_this()); 
-        acceptor.get()->SetHandler(h);
+        acceptor.get()->SetHandler(h1);
         acceptor.get()->Listen();
+        sock_handler_ = h2;
         
         // 疑问:可不可以先注册事件再listen, epoll 不不会出错?
         return RegEvent(EPOLL_CTL_ADD,EPOLLIN,  acceptor);
@@ -372,6 +378,7 @@ MONITOR MONITOR_SVR;
             LOG(ERROR) << "regevent fail";
             return false;
         }        
+        player.get()->SetHandler(sock_handler_);
         player_map_[player.get()->getID()] = player;
         
         return true;
@@ -436,24 +443,49 @@ MONITOR MONITOR_SVR;
     }
 
 //TCPSocket 已连接的服务器
-    TCPSocket::TCPSocket() {
+    TCPSocket::TCPSocket(EPOLLSvrPtr s) {
         socket_handler_ = nullptr;
+        svr_ = s;
     }
-    void TCPSocket::SetHandler(On_Accept_Handler h){
+    void TCPSocket::SetHandler(On_Socket_Handler h){
         socket_handler_ = h;
         
     }
-    
+   
     void TCPSocket::OnNetMessage(){
       
-        char buff[1024] = {0};
-        int32_t ret = NetPackage::Read(peer_.fd_, buff, 1024);
-        if(0 == ret){            
+        char *buff = svr_.get()->buff_;
+        int32_t ret = NetPackage::Read(peer_.fd_, buff, MAX_SOCK_BUFF);
+        if(0 == ret ){// || ret < 4){       //连4个字节都没读到, 没收到包头
             LOG(INFO) << "connection closed by peer fd[" << peer_.fd_ << "]";
             this->KickOut();
             return;
         }
+        
         LOG(INFO) << "receive data[" << buff << "]";
+        //TODO 这里的ret 应该是包的大小 
+        //具体协议应该根据protobuff 来判断
+        /*
+        int32_t cur = 0;
+        int32_t sz = 0;
+        
+        if( nullptr == peer_.buff_.get() ){
+            int32_t *sz = (int32_t*) buff;
+            peer_.buff_ = make_shared<DataBuffer>(peer_.fd_, sz);
+            peer_.buff_.get()->AddData(ret, buff);
+            return;
+            
+        }
+        
+        if( peer_.buff_.get()->NeedData() == 0 ){
+            //已经读取到了完整的包
+            auto f = socket_handler_;
+            f(this->getID(), ret);
+            auto tmp = std::move(peer_.buff_);
+            peer_.buff_ = nullptr;//是不是多此一举
+            //自动删除已经用过的packet
+        }
+         */
         
     }
 
@@ -489,14 +521,13 @@ MONITOR MONITOR_SVR;
             return;
         }   
             
-        TCPSocketPtr sock = std::make_shared<TCPSocket>();
+        TCPSocketPtr sock = std::make_shared<TCPSocket>(this->svr_.get()->shared_from_this());
         auto client = sock.get();
         client->peer_.addr_ = std::move(ip);
         client->peer_.fd_ = cliFD;
         client->peer_.port_ = port;            
         //添加新连接
-        svr_.get()->AddConnection(sock);
-            
+        svr_.get()->AddConnection(sock);            
         auto f = accept_handler_;
         f(client->getID());
         

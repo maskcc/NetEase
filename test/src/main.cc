@@ -171,15 +171,19 @@ void test_sock_utils()
 
 }
 auto count = make_shared<int32_t>(0);
-auto on_accept = [](int32_t id)  {
+auto on_accept = [](uint64_t id)  {
     LOG(INFO) << "on_accept id[" << id << "] cout [" << (*count.get())++ << "]" ;    
 
+};
+auto on_data = [](uint64_t id, int32_t sz){
+     LOG(INFO) << "on_accept id[" << id << "] sz [" << sz << "]" ;  
+    
 };
 
 void test_epoll() {
     EPOLLSvrPtr svr = std::make_shared<EPOLLSvr>();
     auto m = on_accept;
-    svr.get()->Init(30077, 3000, m);    
+    svr.get()->Init(30077, 3000, m, on_data);    
     svr.get()->Start();
 
 

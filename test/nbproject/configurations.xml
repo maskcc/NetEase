@@ -39,6 +39,7 @@
           <cleanCommand>${MAKE} -f Makefile clean</cleanCommand>
           <executablePath>./bin/main.run</executablePath>
           <ccTool>
+            <standard>11</standard>
             <incDir>
               <pElem>include</pElem>
               <pElem>../common/include</pElem>

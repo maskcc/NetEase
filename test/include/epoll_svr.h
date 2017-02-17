@@ -35,7 +35,7 @@ const int32_t MAX_SOCK_BUFF = 1024 * 64; //网络上最大的包大小为 64K
 class EPOLLSvr;
 using EPOLLSvrPtr = std::shared_ptr<EPOLLSvr>;
 using On_Accept_Handler = std::function<void(uint64_t)>;
-
+using On_Socket_Handler = std::function<void(uint64_t, int32_t)>;
 //定时器
 //定时执行过程, 能够添加过程, 删除过程
 //写在主线程中, 能处理主线程数据, 在epoll里处理, epoll超时为 1秒
@@ -216,6 +216,7 @@ class SafeQueue
             int32_t fd_;        //连接的fd
             int32_t port_;      //监听的端口号
             int64_t last_time_; //上次通信的时间戳, 用来踢掉长时间不通讯的连接
+            DataBufferPtr buff_;
     };
     using SocketPtr = std::shared_ptr<Socket>;
 
@@ -230,6 +231,8 @@ class SafeQueue
             virtual uint64_t getID();
             virtual void KickOut();
             virtual void SetHandler(On_Accept_Handler h);
+            virtual void SetHandler(On_Socket_Handler h);
+            
         public:
             Socket   peer_;    //连接信息
         private:
@@ -244,12 +247,13 @@ class SafeQueue
     class TCPSocket : public IPlayer
     {
         public:
-            TCPSocket();
-            virtual void SetHandler(On_Accept_Handler h);
+            TCPSocket(EPOLLSvrPtr s);
+            virtual void SetHandler(On_Socket_Handler h);
             virtual void OnNetMessage();
 
         private:
-            On_Accept_Handler socket_handler_;
+            On_Socket_Handler socket_handler_;
+            EPOLLSvrPtr svr_;                    //epoll svr
     };
     using TCPSocketPtr = std::shared_ptr<TCPSocket>;
     
@@ -268,6 +272,7 @@ class SafeQueue
         private:            
             On_Accept_Handler accept_handler_;  //接收事件后的回调函数
             EPOLLSvrPtr svr_;                    //epoll svr
+            
 
 
     };
@@ -330,7 +335,7 @@ using EPOLL_EV = struct epoll_event;
             //初始化
             //port 端口号, max_connection 最大连接数, 当连接到来时的绑定函数, 
             //timeout 超时多少秒删除连接, window 接收发送窗口, 默认2048, nodelay 不延迟, 默认true
-            bool Init(uint16_t port, int32_t max_connection, On_Accept_Handler h, 
+            bool Init(uint16_t port, int32_t max_connection, On_Accept_Handler h1, On_Socket_Handler h2,
                       int32_t timeout = 30,int32_t window = 2048,  bool nodelay = true);  
             bool Start();
             bool SendMessage(IPlayerPtr player, void *msg, int32_t sz);
@@ -343,6 +348,7 @@ using EPOLL_EV = struct epoll_event;
             bool RegEvent(int32_t op, int32_t event, IPlayerPtr player);
             bool AddConnection(IPlayerPtr player);
         public:
+            char buff_[MAX_SOCK_BUFF];      //接收网络消息的最大长度为 64K, 不用清零, 使用时直接覆盖 
         private:
             int32_t epoll_fd_; //epoll fd, 用来监听发送接收消息的
             int32_t  now_connections_;       //当前的连接数量
@@ -352,9 +358,9 @@ using EPOLL_EV = struct epoll_event;
             std::map<uint64_t, TCPEventPtr> events_map_; //保存消息的地图, key是指向事件的指针地址
             Timer timer_;
             EPOLL_EV events_[MAX_EVENTS];   //缓存epoll_wait 的事件
-            uint64_t ev_ids_[MAX_EVENTS];   //记录事件的id
-            char buff_[MAX_SOCK_BUFF];      //接收网络消息的最大长度为 64K, 不用清零, 使用时直接覆盖 
+            uint64_t ev_ids_[MAX_EVENTS];   //记录事件的id            
             bool stop_;                     //是否已经停止, 用来从外部关服
+            On_Socket_Handler  sock_handler_;//处理收发消息的handler
             
 
     };
