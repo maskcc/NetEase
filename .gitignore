@@ -34,4 +34,4 @@ libs/*
 LOG_*
 
 #Middle files
-./proto/protocols
+proto/protocols/*
