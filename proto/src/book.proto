@@ -1,0 +1,19 @@
+syntax = "proto3";
+
+message Person {
+	string name = 1;
+	int32  id = 2;
+	int32 result_per_page = 3 ; //comment
+	enum Score{
+		GOOD = 0;
+		NORMAL = 1;
+		BAD = 2;
+	}
+	Score score = 4;
+	string phone = 5;
+
+}
+
+message AddrBook {
+	repeated Person people = 1;
+}

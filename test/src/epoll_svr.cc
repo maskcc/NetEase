@@ -70,6 +70,14 @@
         return len;
 
     }
+    void DataBuffer::Resize(int32_t sz){
+        buf_.resize(sz);
+        sz_ = sz;
+        
+    }
+    const void* DataBuffer::GetBuffPtr(){
+        return &buf_[0];        
+    }
 
 //统计信息
 MONITOR MONITOR_SVR;
@@ -295,6 +303,7 @@ MONITOR MONITOR_SVR;
         if( event & EPOLLOUT ){
             write_able_ = true;
         }
+        // TODO 需要处理 EPOLLERR, 
         return;
 
     }
@@ -447,23 +456,86 @@ MONITOR MONITOR_SVR;
     TCPSocket::TCPSocket(EPOLLSvrPtr s) {
         socket_handler_ = nullptr;
         svr_ = s;
+        msg_ = nullptr;
+        step_ = READ_HEAD;
     }
     void TCPSocket::SetHandler(On_Socket_Handler h){
         socket_handler_ = h;
         
     }
    
-    void TCPSocket::OnNetMessage(){
-      
+    void TCPSocket::OnNetMessage(){      
         char *buff = svr_.get()->buff_;
         int32_t ret = NetPackage::Read(peer_.fd_, buff, MAX_SOCK_BUFF);
-        if(0 == ret ){// || ret < 4){       //连4个字节都没读到, 没收到包头
+        if( ret < 0 ){
+            if( EINTR != errno ){   
+                LOG(INFO) << "read fail! fd[" << peer_.fd_ << "] errno[" << errno << "] msg[" << strerror(errno) << "]";
+                this->KickOut();            
+            }
+            return;
+        }
+        if(0 == ret ){     
             LOG(INFO) << "connection closed by peer fd[" << peer_.fd_ << "]";
             this->KickOut();
             return;
         }
         
-        LOG(INFO) << "receive data[" << buff << "]";
+        int32_t more_data = ret;
+        
+        while( more_data > 0){
+            if( nullptr == peer_.buff_.get() ){            
+                peer_.buff_ = std::make_shared<DataBuffer>(peer_.fd_, HEADER_SZ);            
+            }
+                
+            auto data_buffer = peer_.buff_.get();
+            int32_t need_data = data_buffer->NeedData();
+            
+            //读取包头
+            if( READ_HEAD == step_ ){
+                if( more_data < need_data ) {
+                    //包头没有读完整
+                    data_buffer->AddData(more_data, buff);
+                    return;
+                }
+                data_buffer->AddData(need_data, buff);  
+                //指向body的头指针, 向前添加已经读过的内存
+                buff += need_data;
+                more_data = (more_data - need_data) < 0 ? 0:(more_data - need_data);
+                
+                msg_ = (MSG* )data_buffer->GetBuffPtr();
+                
+                //为body 申请内存
+                data_buffer->Resize(msg_->header.size_ + HEADER_SZ);  
+                need_data = data_buffer->NeedData();                
+              
+                step_ = READ_BODY;            
+            }
+            
+            //现在的step 肯定是 READ_BODY
+            if( more_data > 0 ) {
+                //读取body
+                if(more_data < need_data) {
+                    data_buffer->AddData(more_data, buff);
+                    return;
+                }
+                
+                data_buffer->AddData(need_data, buff);
+                more_data = (more_data - need_data) < 0 ? 0:(more_data - need_data);
+                //buff读取后指针后移
+                buff += need_data;
+                
+                auto f = socket_handler_;
+                f(this->getID(), ret);
+                auto tmp = std::move(peer_.buff_);
+                peer_.buff_ = nullptr;//是不是多此一举
+                //自动删除已经用过的packet
+                
+                
+            }
+        }   
+        
+        
+        //LOG(INFO) << "receive data[" << buff << "]";
         //TODO 这里的ret 应该是包的大小 
         //具体协议应该根据protobuff 来判断
         /*
@@ -520,13 +592,17 @@ MONITOR MONITOR_SVR;
             // 可能会有问题, 当只是发生了 eintr 或者其他错误时, 还有没接收的连接
             //LOG(INFO) << "accept fail" ;
             return;
-        }   
-            
+        }             
+        
         TCPSocketPtr sock = std::make_shared<TCPSocket>(this->svr_.get()->shared_from_this());
         auto client = sock.get();
         client->peer_.addr_ = std::move(ip);
         client->peer_.fd_ = cliFD;
-        client->peer_.port_ = port;            
+        client->peer_.port_ = port;   
+        
+        NetPackage::SetNonBlock(cliFD);
+        NetPackage::SetNoDelay(cliFD);
+        NetPackage::SetReuse(cliFD);
         //添加新连接
         svr_.get()->AddConnection(sock);            
         auto f = accept_handler_;

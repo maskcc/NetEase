@@ -31,6 +31,19 @@
 const int32_t MAX_EVENTS = 128;
 const int32_t MAX_SOCK_BUFF = 1024 * 64; //网络上最大的包大小为 64K
 
+using HEADER = struct tagHEADER {
+    uint16_t version_;  //版本 
+    uint16_t size_;     //包体大小, 最大 65535     
+    uint16_t serial_;   //TODO 序列, 类似tcp 序列字段, 序号不对断开连接?
+    uint16_t reserve_;  //保留字段   
+};
+//包头大小
+const int32_t HEADER_SZ = sizeof(HEADER);
+using MSG = struct tagMSG {
+    HEADER header; //包头
+    void   *body;  //包体
+};
+
 //前置声明
 class EPOLLSvr;
 using EPOLLSvrPtr = std::shared_ptr<EPOLLSvr>;
@@ -80,10 +93,12 @@ class Timer
                 //向buff里添加数据, 返回还不够的长度, 
                 //返回值为 -1 表示添加的数据长度比总长度还长, 返回0 表示已经传送完成
                 int32_t AddData(int32_t sz, const char* ptr);
+                void Resize(int32_t sz);
 
                 //返回还需要的数据长度
                 //返回-1 表示错误, pos比sz大, 不存在, 返回0 表示已经好了, 返回其他大于0 的值表示还需要的数据长度
                 int32_t NeedData();
+                const void* GetBuffPtr();
 
             private:
                 int32_t  sock_;  //文件描述符
@@ -244,6 +259,10 @@ class SafeQueue
     using IPlayerPtr = std::shared_ptr<IPlayer>;
 
 
+    enum TCP_STEP  {
+        READ_HEAD = 1,
+        READ_BODY
+    };
 //已连接的服务器
     class TCPSocket : public IPlayer
     {
@@ -253,6 +272,9 @@ class SafeQueue
             virtual void OnNetMessage();
 
         private:
+            MSG    *msg_;  //当前消息
+            TCP_STEP step_; //当前进度
+            
             On_Socket_Handler socket_handler_;
             EPOLLSvrPtr svr_;                    //epoll svr
     };
