@@ -32,3 +32,6 @@ core.*
 libs/*
 *.run
 LOG_*
+
+#Middle files
+./proto/protocols
