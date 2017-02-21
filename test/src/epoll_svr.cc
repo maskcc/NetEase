@@ -468,100 +468,87 @@ MONITOR MONITOR_SVR;
    
     void TCPSocket::OnNetMessage(){      
         char *buff = svr_.get()->buff_;
-        int32_t ret = NetPackage::Read(peer_.fd_, buff, MAX_SOCK_BUFF);
-        if( ret < 0 ){
-            if( EINTR != errno ){   
-                LOG(INFO) << "read fail! fd[" << peer_.fd_ << "] errno[" << errno << "] msg[" << strerror(errno) << "]";
-                this->KickOut();            
+        for(;;){
+            //一直读, 直到出错 
+            int32_t ret = NetPackage::Read(peer_.fd_, buff, MAX_SOCK_BUFF);
+            if(0 == ret ){     
+                LOG(INFO) << "connection closed by peer fd[" << peer_.fd_ << "]";
+                this->KickOut();
+                return;
             }
-            return;
-        }
-        if(0 == ret ){     
-            LOG(INFO) << "connection closed by peer fd[" << peer_.fd_ << "]";
-            this->KickOut();
-            return;
-        }
-        
-        int32_t more_data = ret;
-        
-        while( more_data > 0){
-            if( nullptr == peer_.buff_.get() ){            
-                peer_.buff_ = std::make_shared<DataBuffer>(peer_.fd_, HEADER_SZ);            
-            }
-                
-            auto data_buffer = peer_.buff_.get();
-            int32_t need_data = data_buffer->NeedData();
-            
-            //读取包头
-            if( READ_HEAD == step_ ){
-                if( more_data < need_data ) {
-                    //包头没有读完整
-                    data_buffer->AddData(more_data, buff);
+
+            if( ret < 0 ){
+                if( EAGAIN  == errno || EWOULDBLOCK == errno ){
+                    //再次read, buff将从头开始填充
+                    buff = svr_.get()->buff_;  
+                    continue;
+
+                }else{   
+                    LOG(INFO) << "read fail! fd[" << peer_.fd_ << "] errno[" << errno << "] msg[" << strerror(errno) << "]";
+                    this->KickOut();  
                     return;
                 }
-                data_buffer->AddData(need_data, buff);  
-                //指向body的头指针, 向前添加已经读过的内存
-                buff += need_data;
-                more_data = (more_data - need_data) < 0 ? 0:(more_data - need_data);
-                
-                msg_ = (MSG* )data_buffer->GetBuffPtr();
-                
-                //为body 申请内存
-                data_buffer->Resize(msg_->header.size_ + HEADER_SZ);  
-                need_data = data_buffer->NeedData();                
-              
-                step_ = READ_BODY;            
+
             }
-            
-            //现在的step 肯定是 READ_BODY
-            if( more_data > 0 ) {
-                //读取body
-                if(more_data < need_data) {
-                    data_buffer->AddData(more_data, buff);
-                    return;
+
+
+            int32_t more_data = ret;
+
+            while( more_data > 0){
+                if( nullptr == peer_.buff_.get() ){            
+                    peer_.buff_ = std::make_shared<DataBuffer>(peer_.fd_, HEADER_SZ);            
                 }
-                
-                data_buffer->AddData(need_data, buff);
-                more_data = (more_data - need_data) < 0 ? 0:(more_data - need_data);
-                //buff读取后指针后移
-                buff += need_data;
-                
-                auto f = socket_handler_;
-                f(this->getID(), ret);
-                auto tmp = std::move(peer_.buff_);
-                peer_.buff_ = nullptr;//是不是多此一举
-                //自动删除已经用过的packet
-                
-                
-            }
-        }   
-        
-        
-        //LOG(INFO) << "receive data[" << buff << "]";
-        //TODO 这里的ret 应该是包的大小 
-        //具体协议应该根据protobuff 来判断
-        /*
-        int32_t cur = 0;
-        int32_t sz = 0;
-        
-        if( nullptr == peer_.buff_.get() ){
-            int32_t *sz = (int32_t*) buff;
-            peer_.buff_ = make_shared<DataBuffer>(peer_.fd_, sz);
-            peer_.buff_.get()->AddData(ret, buff);
-            return;
-            
+
+                auto data_buffer = peer_.buff_.get();
+                int32_t need_data = data_buffer->NeedData();
+
+                //读取包头
+                if( READ_HEAD == step_ ){
+                    if( more_data < need_data ) {
+                        //包头没有读完整
+                        data_buffer->AddData(more_data, buff);
+                        return;
+                    }
+                    data_buffer->AddData(need_data, buff);  
+                    //指向body的头指针, 向前添加已经读过的内存
+                    buff += need_data;
+                    more_data = (more_data - need_data) < 0 ? 0:(more_data - need_data);
+
+                    msg_ = (MSG* )data_buffer->GetBuffPtr();
+
+                    //为body 申请内存
+                    data_buffer->Resize(msg_->header.size_ + HEADER_SZ);  
+                    //重新申请内存后, 以前的msg_指向的内容不能再使用了
+                    msg_ = (MSG* )data_buffer->GetBuffPtr();
+                    need_data = data_buffer->NeedData();                
+
+                    step_ = READ_BODY;            
+                }
+
+                //现在的step 肯定是 READ_BODY
+                if( more_data > 0 ) {
+                    //读取body
+                    if(more_data < need_data) {
+                        data_buffer->AddData(more_data, buff);
+                        return;
+                    }
+
+                    data_buffer->AddData(need_data, buff);
+                    more_data = (more_data - need_data) < 0 ? 0:(more_data - need_data);
+                    //buff读取后指针后移
+                    buff += need_data;
+
+                    auto f = socket_handler_;
+                    f(this->getID(), msg_->header.size_);
+                    //自动删除已经用过的packet
+                    auto tmp = std::move(peer_.buff_);
+                    peer_.buff_ = nullptr;//是不是多此一举
+                    //读取新的包头
+                    step_ = READ_HEAD;
+
+                }
+            }   
         }
-        
-        if( peer_.buff_.get()->NeedData() == 0 ){
-            //已经读取到了完整的包
-            auto f = socket_handler_;
-            f(this->getID(), ret);
-            auto tmp = std::move(peer_.buff_);
-            peer_.buff_ = nullptr;//是不是多此一举
-            //自动删除已经用过的packet
-        }
-         */
-        
     }
 
 //TCPAccept
@@ -589,10 +576,10 @@ MONITOR MONITOR_SVR;
         std::string ip = "";
         uint16_t port = 0;
         bool ret = false;
-        //do{
+        //do{ //ET 模式
             ret = NetPackage::Accept( peer_.fd_, &cliFD, &ip, &port);
             if(false == ret){
-                // 可能会有问题, 当只是发生了 eintr 或者其他错误时, 还有没接收的连接
+                // 可能会有问题, 当只是发生了 eintr, EAGAIN, EWOULDBLOCK 或其他错误时, 还有没接收的连接
                 //LOG(INFO) << "accept fail" ;
                 return;
             }             
@@ -606,12 +593,7 @@ MONITOR MONITOR_SVR;
             NetPackage::SetNonBlock(cliFD);
             NetPackage::SetNoDelay(cliFD);
             NetPackage::SetReuse(cliFD);
-         /*
-            EPOLL_EV *cli_ev = new EPOLL_EV;
-                    cli_ev->events = EPOLLIN;
-                    cli_ev->data.fd = cliFD;
-                    epoll_ctl(svr_.get()->epoll_fd_, EPOLL_CTL_ADD, cliFD, cli_ev);*/   
-            //添加新连接
+       
             svr_.get()->AddConnection(sock);            
             auto f = accept_handler_;
             f(client->getID());
