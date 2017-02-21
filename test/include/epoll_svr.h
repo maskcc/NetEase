@@ -372,9 +372,10 @@ using EPOLL_EV = struct epoll_event;
             bool RegEvent(int32_t op, int32_t event, IPlayerPtr player);
             bool AddConnection(IPlayerPtr player);
         public:
-            char buff_[MAX_SOCK_BUFF];      //接收网络消息的最大长度为 64K, 不用清零, 使用时直接覆盖 
-        private:
+            char buff_[MAX_SOCK_BUFF];      //接收网络消息的最大长度为 64K, 不用清零, 使用时直接覆盖
             int32_t epoll_fd_; //epoll fd, 用来监听发送接收消息的
+        private:
+            
             int32_t  now_connections_;       //当前的连接数量
             int32_t max_connections_;       //最大连接数量
             int32_t time_out_;              //超时, 过多久服务器客户端没有消息断开连接

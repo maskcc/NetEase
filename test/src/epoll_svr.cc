@@ -290,6 +290,7 @@ MONITOR MONITOR_SVR;
         read_able_ = false;
         write_able_ = false;
         fd_ = NetPackage::kINVALID_FD;
+        memset(&ev_, 0, sizeof(ev_));
     }
     void TCPEvent::Proc() {
         int32_t event = ev_.events;
@@ -344,7 +345,7 @@ MONITOR MONITOR_SVR;
         sock_handler_ = h2;
         
         // 疑问:可不可以先注册事件再listen, epoll 不不会出错?
-        return RegEvent(EPOLL_CTL_ADD,EPOLLIN,  acceptor);
+        return RegEvent(EPOLL_CTL_ADD, EPOLLIN,  acceptor);
 
     }
     
@@ -383,7 +384,7 @@ MONITOR MONITOR_SVR;
         }
         
         ++now_connections_;
-        if(!RegEvent(EPOLL_CTL_ADD, EPOLLIN | EPOLLOUT, player)){
+        if(!RegEvent(EPOLL_CTL_ADD, EPOLLIN , player)){
             LOG(ERROR) << "regevent fail";
             return false;
         }        
@@ -427,6 +428,7 @@ MONITOR MONITOR_SVR;
     //毫秒级别的timeout
     int32_t EPOLLSvr::Wait() {
         //TODO add timer here
+        
         int32_t ret = epoll_wait(epoll_fd_, events_, MAX_EVENTS, -1);
         if( 0 == ret ){
             //time out
@@ -586,26 +588,33 @@ MONITOR MONITOR_SVR;
         int32_t cliFD = NetPackage::kINVALID_FD;
         std::string ip = "";
         uint16_t port = 0;
-        
-        bool ret = NetPackage::Accept( peer_.fd_, &cliFD, &ip, &port);
-        if(false == ret){
-            // 可能会有问题, 当只是发生了 eintr 或者其他错误时, 还有没接收的连接
-            //LOG(INFO) << "accept fail" ;
-            return;
-        }             
-        
-        TCPSocketPtr sock = std::make_shared<TCPSocket>(this->svr_.get()->shared_from_this());
-        auto client = sock.get();
-        client->peer_.addr_ = std::move(ip);
-        client->peer_.fd_ = cliFD;
-        client->peer_.port_ = port;   
-        
-        NetPackage::SetNonBlock(cliFD);
-        NetPackage::SetNoDelay(cliFD);
-        NetPackage::SetReuse(cliFD);
-        //添加新连接
-        svr_.get()->AddConnection(sock);            
-        auto f = accept_handler_;
-        f(client->getID());
+        bool ret = false;
+        //do{
+            ret = NetPackage::Accept( peer_.fd_, &cliFD, &ip, &port);
+            if(false == ret){
+                // 可能会有问题, 当只是发生了 eintr 或者其他错误时, 还有没接收的连接
+                //LOG(INFO) << "accept fail" ;
+                return;
+            }             
+
+            TCPSocketPtr sock = std::make_shared<TCPSocket>(this->svr_.get()->shared_from_this());
+            auto client = sock.get();
+            client->peer_.addr_ = std::move(ip);
+            client->peer_.fd_ = cliFD;
+            client->peer_.port_ = port;   
+
+            NetPackage::SetNonBlock(cliFD);
+            NetPackage::SetNoDelay(cliFD);
+            NetPackage::SetReuse(cliFD);
+         /*
+            EPOLL_EV *cli_ev = new EPOLL_EV;
+                    cli_ev->events = EPOLLIN;
+                    cli_ev->data.fd = cliFD;
+                    epoll_ctl(svr_.get()->epoll_fd_, EPOLL_CTL_ADD, cliFD, cli_ev);*/   
+            //添加新连接
+            svr_.get()->AddConnection(sock);            
+            auto f = accept_handler_;
+            f(client->getID());
+        //}while(ret);
         
     }

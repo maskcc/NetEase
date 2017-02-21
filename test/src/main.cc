@@ -170,6 +170,56 @@ void test_sock_utils()
     th2.join();
 
 }
+
+
+void test_epoll_function()
+{
+    auto svr = [](){
+        int32_t fd = NetPackage::kINVALID_FD;
+        bool ret = NetPackage::Listen(&fd, "0.0.0.0", 30077, true);
+        int32_t acc_fd = -1;
+        uint16_t acc_port = -1;
+        std::string ip = "\0";
+        
+        int32_t efd = epoll_create(1024);
+        EPOLL_EV ev = {0};
+        ev.events = EPOLLIN;
+        ev.data.fd = fd;               
+        epoll_ctl(efd, EPOLL_CTL_ADD, fd, &ev);
+        
+        for(;;){
+            EPOLL_EV events_[MAX_EVENTS] = {0};
+            int32_t count = 0;
+            count = epoll_wait(efd, events_, MAX_EVENTS, -1);            
+            
+            for(int c = 0; c < count; ++c){
+                if(events_[c].data.fd == fd){
+                    ret = NetPackage::Accept(fd, &acc_fd, &ip, &acc_port);
+                    LOG(INFO) << strerror(errno) << "accept success, fd:" << acc_fd << " ip:" << ip << " port:" << acc_port ; 
+                    //NetPackage::Write(acc_fd, "Good Job!", 10);
+                    //NetPackage::Close(acc_fd);
+                    EPOLL_EV *cli_ev = new EPOLL_EV;
+                    cli_ev->events = EPOLLIN;
+                    cli_ev->data.fd = acc_fd;
+                    epoll_ctl(efd, EPOLL_CTL_ADD, acc_fd, cli_ev);
+                }else{
+                    int32_t cfd = events_[c].data.fd;
+                    //NetPackage::Write(acc_fd, "Good Job!", 10);
+                    char buff[1024] = {0};
+                    read(acc_fd, buff, 1024); 
+
+                    
+                }
+            }
+        }
+    };
+    
+
+    std::thread th1(svr);    
+    th1.join();
+    
+
+}
 auto count = make_shared<int32_t>(0);
 auto on_accept = [](uint64_t id)  {
     LOG(INFO) << "on_accept id[" << id << "] cout [" << (*count.get())++ << "]" ;    
@@ -198,6 +248,7 @@ int main(int argc, char* argv[])
     //testQ();
     //test_sock_utils();
     test_epoll();
+    //test_epoll_function();
     //testMap();
 
 
