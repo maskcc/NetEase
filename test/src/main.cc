@@ -7,7 +7,7 @@
 
 #include "log.h"
 #include "epoll_svr.h"
-
+#include "book.pb.h"
 using namespace std;
 //TODO:  还没做完
 //FIXME: 你说呢
@@ -225,17 +225,91 @@ auto on_accept = [](uint64_t id)  {
     LOG(INFO) << "on_accept id[" << id << "] cout [" << (*count.get())++ << "]" ;    
 
 };
-auto on_data = [](uint64_t id, int32_t sz){
+auto on_data = [](uint64_t id, const void* data, int32_t sz){
      LOG(INFO) << "on_accept id[" << id << "] sz [" << sz << "]" ;  
-    
+     string msg((char*)data, sz);
+     Person person;
+     person.ParseFromString(msg);
+     LOG(INFO) << "name:" << person.name();
+     LOG(INFO) << "id:" << person.id();
+     LOG(INFO) << "result_per_page:" << person.result_per_page();
+     LOG(INFO) << "score:" << person.score();
+     LOG(INFO) << "phone:" << person.phone();
+  
 };
 
 void test_epoll() {
-    EPOLLSvrPtr svr = std::make_shared<EPOLLSvr>();
-    auto m = on_accept;
-    svr.get()->Init(30077, 3000, m, on_data);    
-    svr.get()->Start();
-
+    
+    auto svr_proc = []{
+        EPOLLSvrPtr svr = std::make_shared<EPOLLSvr>();
+        auto m = on_accept;
+        auto server = svr.get();
+        server->Init(30077, 3000, m, on_data);    
+        server->Start();
+    };
+    
+    auto cli_proc = []{
+        this_thread::sleep_for(std::chrono::seconds(1));
+        int32_t conn = NetPackage::kINVALID_FD;
+        bool ret = false;
+        
+        ret = NetPackage::Connect(&conn, std::string("127.0.0.1"), 30077);
+        
+        char buff_[4096];
+        Person person;
+        person.set_name("Jack");
+        person.set_id(7);
+        person.set_result_per_page(9);
+        person.set_score(Person::GOOD);
+        person.set_phone("18221888856");
+        string data;
+        person.SerializeToString(&data);       
+    
+        int32_t sz = data.size() + sizeof(HEADER);        
+        
+        MSG *pMsg = (MSG* )buff_;
+        pMsg->header.version_ = 1000;
+        pMsg->header.size_ = data.size();
+        pMsg->header.serial_ = 0;
+        pMsg->header.reserve_ = 0;
+        char *p = (char*)pMsg;
+        memcpy(p + sizeof(HEADER), data.c_str(), data.size());
+        //memcpy(&pMsg->body, data.c_str(), data.size());
+    
+        string str(p + sizeof(HEADER), pMsg->header.size_);
+        LOG(INFO) << "msg:" << str;
+        Person person2;
+        person2.ParseFromString(str);         
+        LOG(INFO) << "name2:" << person2.name();
+        LOG(INFO) << "id2:" << person2.id();
+        LOG(INFO) << "result_per_page2:" << person2.result_per_page();
+        LOG(INFO) << "score2:" << person2.score();
+        LOG(INFO) << "phone2:" << person2.phone() << "\n";
+        int32_t sendcnt = 0;        
+        int32_t leftcnt = sz;    
+        for(auto c = 0; c < 100000; ++ c){
+            LOG(INFO) << "ccc:" << c;
+            leftcnt = sz;
+            while(leftcnt > 0){
+                sendcnt = NetPackage::Write(conn, buff_, sz);
+                if(sendcnt < 0){
+                    if( EAGAIN == errno || EWOULDBLOCK == errno ){
+                        continue;
+                    }else{
+                        return false;
+                    }
+                }            
+                leftcnt -= sendcnt;       
+            }
+        }
+        
+    };
+    
+    std::thread th1(svr_proc);    
+    
+    std::thread th2(cli_proc);    
+    th2.join();
+    th1.join();
 
 }
 

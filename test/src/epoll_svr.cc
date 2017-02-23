@@ -52,6 +52,9 @@
         sock_  = s;
         pos_   = 0;
     }
+    DataBuffer::~DataBuffer(){
+        LOG(INFO) << "DataBuffer Destructed! sz:" << sz_ << " sock_:" << sock_ << "pos:" << pos_;
+    }
     int32_t DataBuffer::AddData(int32_t sz, const char * ptr) {
         //至少要先把长度发过来
         if(pos_ + sz > sz_){
@@ -63,6 +66,7 @@
         return sz_ - pos_;
     }
     int32_t DataBuffer::NeedData() {
+        LOG(INFO)<< "sz_:" << sz_ << " pos_:" << pos_;
         int32_t len = sz_ - pos_;
         if(len < 0){
             return -1;
@@ -405,7 +409,28 @@ MONITOR MONITOR_SVR;
     }
 
     bool EPOLLSvr::SendMessage(IPlayerPtr player, void* msg, int32_t sz) {
-
+        //TODO 添加发送缓冲区, 异步发送
+        //先阻塞发送
+        MSG *pMsg = (MSG* )buff_;
+        pMsg->header.version_ = 1000;
+        pMsg->header.size_ = sz;
+        pMsg->header.serial_ = 0;
+        pMsg->header.reserve_ = 0;
+        memcpy(pMsg->body, msg, sz);
+        int32_t sendcnt = 0;        
+        int32_t leftcnt = sz;        
+        while(leftcnt > 0){
+            sendcnt = NetPackage::Write(player.get()->peer_.fd_, buff_, sz);
+            if(sendcnt < 0){
+                if( EAGAIN == errno || EWOULDBLOCK == errno ){
+                    continue;
+                }else{
+                    return false;
+                }
+            }            
+            leftcnt -= sendcnt;       
+        }
+        return true;
     }
     bool EPOLLSvr::Connect(std::string dest, bool reconnect) {
 
@@ -495,11 +520,12 @@ MONITOR MONITOR_SVR;
             int32_t more_data = ret;
 
             while( more_data > 0){
-                if( nullptr == peer_.buff_.get() ){            
-                    peer_.buff_ = std::make_shared<DataBuffer>(peer_.fd_, HEADER_SZ);            
+                if( nullptr == peer_.buff_.get() ){  
+                    peer_.buff_ = std::make_shared<DataBuffer>(peer_.fd_, HEADER_SZ);      
                 }
 
                 auto data_buffer = peer_.buff_.get();
+               
                 int32_t need_data = data_buffer->NeedData();
 
                 //读取包头
@@ -539,7 +565,8 @@ MONITOR MONITOR_SVR;
                     buff += need_data;
 
                     auto f = socket_handler_;
-                    f(this->getID(), msg_->header.size_);
+                    //客户程序只需要截获到数据信息就行, 不用关心包头                    
+                    f(this->getID(), data_buffer->GetBuffPtr() + sizeof(HEADER),msg_->header.size_);
                     //自动删除已经用过的packet
                     auto tmp = std::move(peer_.buff_);
                     peer_.buff_ = nullptr;//是不是多此一举
@@ -549,6 +576,10 @@ MONITOR MONITOR_SVR;
                 }
             }   
         }
+    }
+    void TCPSocket::KickOut() {
+        IPlayer::KickOut();
+        //TODO 需要再 EPOLLSvr 的map 中删除事件events_map_ 和连接信息 player_map_
     }
 
 //TCPAccept

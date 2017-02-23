@@ -43,6 +43,7 @@
             <incDir>
               <pElem>include</pElem>
               <pElem>../common/include</pElem>
+              <pElem>../proto/protocols</pElem>
               <pElem>.</pElem>
             </incDir>
             <preprocessorList>

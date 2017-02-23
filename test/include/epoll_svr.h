@@ -48,7 +48,7 @@ using MSG = struct tagMSG {
 class EPOLLSvr;
 using EPOLLSvrPtr = std::shared_ptr<EPOLLSvr>;
 using On_Accept_Handler = std::function<void(uint64_t)>;
-using On_Socket_Handler = std::function<void(uint64_t, int32_t)>;
+using On_Socket_Handler = std::function<void(uint64_t, const void*, int32_t)>;
 //定时器
 //定时执行过程, 能够添加过程, 删除过程
 //写在主线程中, 能处理主线程数据, 在epoll里处理, epoll超时单位为毫秒
@@ -89,6 +89,7 @@ class Timer
                 //rsz, real sz, 接收到的包的长度
                 //ptr, 数据地址
                 DataBuffer(int32_t sock, int32_t sz);
+                ~DataBuffer();
 
                 //向buff里添加数据, 返回还不够的长度, 
                 //返回值为 -1 表示添加的数据长度比总长度还长, 返回0 表示已经传送完成
@@ -270,6 +271,7 @@ class SafeQueue
             TCPSocket(EPOLLSvrPtr s);
             virtual void SetHandler(On_Socket_Handler h);
             virtual void OnNetMessage();
+            virtual void KickOut();
 
         private:
             MSG    *msg_;  //当前消息

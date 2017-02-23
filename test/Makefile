@@ -4,14 +4,14 @@ OBJECTPATH := ./obj/$(TARGETNAME)
 SRCPATH := ./src
 # 0 -- Application; 1 -- Static library; 2 -- Dynamic library
 TARGETTYPE = 0
-TARGETINCS = -I./include  -I../common/include
-TARGETLIBS =  #../protocol/OdaoMobileProto.a
+TARGETINCS = -I./include  -I../common/include -I../proto/protocols
+TARGETLIBS = ../proto/bin/protocols.a #../protocol/OdaoMobileProto.a
 
 CPP = g++
 DEBUG = -g -DDEBUG -D_REENTRANT
 RELEASE = -g -O2
 CPPFLAGS  = $(TARGETINCS) -std=c++11
-LINKFLAGS = $(TARGETLIBS) -lpthread -lrt -lnsl -lgcc_s  -lglog
+LINKFLAGS = $(TARGETLIBS) -lpthread -lrt -lnsl -lgcc_s  -lglog  -lprotobuf
 TARGETSRCS = $(wildcard $(SRCPATH)/*.c $(SRCPATH)/*.cc)
 TARGETOBJSRCS = $(subst $(SRCPATH)/, ,$(TARGETSRCS))
 OBJS = $(addprefix $(OBJECTPATH)/, $(patsubst %.c,%.o,$(TARGETOBJSRCS:.cc=.o)))
