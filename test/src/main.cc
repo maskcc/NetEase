@@ -226,7 +226,7 @@ auto on_accept = [](uint64_t id)  {
 
 };
 auto on_data = [](uint64_t id, const void* data, int32_t sz){
-     LOG(INFO) << "on_accept id[" << id << "] sz [" << sz << "]" ;  
+     LOG(INFO) << "on_data id[" << id << "] sz [" << sz << "]" ;  
      string msg((char*)data, sz);
      Person person;
      person.ParseFromString(msg);
@@ -276,19 +276,22 @@ void test_epoll() {
         memcpy(p + sizeof(HEADER), data.c_str(), data.size());
         //memcpy(&pMsg->body, data.c_str(), data.size());
     
-        string str(p + sizeof(HEADER), pMsg->header.size_);
-        LOG(INFO) << "msg:" << str;
-        Person person2;
-        person2.ParseFromString(str);         
-        LOG(INFO) << "name2:" << person2.name();
-        LOG(INFO) << "id2:" << person2.id();
-        LOG(INFO) << "result_per_page2:" << person2.result_per_page();
-        LOG(INFO) << "score2:" << person2.score();
-        LOG(INFO) << "phone2:" << person2.phone() << "\n";
+      //  string str(p + sizeof(HEADER), pMsg->header.size_);
+       // LOG(INFO) << "msg:" << str;
+      //  Person person2;
+      //  person2.ParseFromString(str);         
+      //  LOG(INFO) << "name2:" << person2.name();
+      //  LOG(INFO) << "id2:" << person2.id();
+      //  LOG(INFO) << "result_per_page2:" << person2.result_per_page();
+      //  LOG(INFO) << "score2:" << person2.score();
+      //  LOG(INFO) << "phone2:" << person2.phone() << "\n";
         int32_t sendcnt = 0;        
         int32_t leftcnt = sz;    
-        for(auto c = 0; c < 100000; ++ c){
-            LOG(INFO) << "ccc:" << c;
+       // for(auto c = 0; c < 100000; ++ c){
+         //   LOG(INFO) << "ccc:" << c;
+            
+            this_thread::sleep_for(std::chrono::seconds(1));
+            
             leftcnt = sz;
             while(leftcnt > 0){
                 sendcnt = NetPackage::Write(conn, buff_, sz);
@@ -301,15 +304,17 @@ void test_epoll() {
                 }            
                 leftcnt -= sendcnt;       
             }
-        }
+       // }
         
     };
     
     std::thread th1(svr_proc);    
     
-    std::thread th2(cli_proc);    
+    std::thread th2(cli_proc); 
+    std::thread th3(cli_proc); 
     th2.join();
     th1.join();
+    th3.join();
 
 }
 

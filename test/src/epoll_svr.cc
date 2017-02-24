@@ -53,7 +53,7 @@
         pos_   = 0;
     }
     DataBuffer::~DataBuffer(){
-        LOG(INFO) << "DataBuffer Destructed! sz:" << sz_ << " sock_:" << sock_ << "pos:" << pos_;
+      //  LOG(INFO) << "DataBuffer Destructed! sz:" << sz_ << " sock_:" << sock_ << "pos:" << pos_;
     }
     int32_t DataBuffer::AddData(int32_t sz, const char * ptr) {
         //至少要先把长度发过来
@@ -66,7 +66,7 @@
         return sz_ - pos_;
     }
     int32_t DataBuffer::NeedData() {
-        LOG(INFO)<< "sz_:" << sz_ << " pos_:" << pos_;
+       // LOG(INFO)<< "sz_:" << sz_ << " pos_:" << pos_;
         int32_t len = sz_ - pos_;
         if(len < 0){
             return -1;
@@ -569,7 +569,7 @@ MONITOR MONITOR_SVR;
                     f(this->getID(), data_buffer->GetBuffPtr() + sizeof(HEADER),msg_->header.size_);
                     //自动删除已经用过的packet
                     auto tmp = std::move(peer_.buff_);
-                    peer_.buff_ = nullptr;//是不是多此一举
+                    peer_.buff_ = nullptr;//是不是多此一举, 就是多此一举, move 后peer_buff_ 会为nullptr
                     //读取新的包头
                     step_ = READ_HEAD;
 
