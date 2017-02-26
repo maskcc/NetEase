@@ -495,7 +495,9 @@ MONITOR MONITOR_SVR;
         char *buff = svr_.get()->buff_;
         for(;;){
             //一直读, 直到出错 
+            LOG(INFO) << "before read fd[" << peer_.fd_ << "]";
             int32_t ret = NetPackage::Read(peer_.fd_, buff, MAX_SOCK_BUFF);
+            LOG(INFO) << "after read ret[" << "ret]";
             if(0 == ret ){     
                 LOG(INFO) << "connection closed by peer fd[" << peer_.fd_ << "]";
                 this->KickOut();
@@ -505,8 +507,9 @@ MONITOR MONITOR_SVR;
             if( ret < 0 ){
                 if( EAGAIN  == errno || EWOULDBLOCK == errno ){
                     //再次read, buff将从头开始填充
-                    buff = svr_.get()->buff_;  
-                    continue;
+                    //buff = svr_.get()->buff_;  
+                    //continue;
+                    return;
 
                 }else{   
                     LOG(INFO) << "read fail! fd[" << peer_.fd_ << "] errno[" << errno << "] msg[" << strerror(errno) << "]";
@@ -521,7 +524,9 @@ MONITOR MONITOR_SVR;
 
             while( more_data > 0){
                 if( nullptr == peer_.buff_.get() ){  
+                    LOG(INFO) << "before make shared";
                     peer_.buff_ = std::make_shared<DataBuffer>(peer_.fd_, HEADER_SZ);      
+                    LOG(INFO) << "after make shared";
                 }
 
                 auto data_buffer = peer_.buff_.get();

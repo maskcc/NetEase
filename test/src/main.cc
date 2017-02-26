@@ -287,10 +287,10 @@ void test_epoll() {
       //  LOG(INFO) << "phone2:" << person2.phone() << "\n";
         int32_t sendcnt = 0;        
         int32_t leftcnt = sz;    
-       // for(auto c = 0; c < 100000; ++ c){
+        for(auto c = 0; c < 100000; ++ c){
          //   LOG(INFO) << "ccc:" << c;
             
-            this_thread::sleep_for(std::chrono::seconds(1));
+            //this_thread::sleep_for(std::chrono::seconds(1));
             
             leftcnt = sz;
             while(leftcnt > 0){
@@ -304,7 +304,7 @@ void test_epoll() {
                 }            
                 leftcnt -= sendcnt;       
             }
-       // }
+        }
         
     };
     
