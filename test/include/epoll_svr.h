@@ -31,6 +31,7 @@
 const int32_t MAX_EVENTS = 128;
 const int32_t MAX_SOCK_BUFF = 1024 * 64; //网络上最大的包大小为 64K
 
+const int32_t VERSION = 1001;
 using HEADER = struct tagHEADER {
     uint16_t version_;  //版本 
     uint16_t size_;     //包体大小, 最大 65535     
@@ -124,6 +125,8 @@ class Timer
             MONITOR(){recv_pack_count_ = 0; send_pack_count_ = 0;}
             void AddRecvPack(){++recv_pack_count_;}
             void AddSendPack(){++send_pack_count_;}
+            uint64_t GetRecvPack(){return recv_pack_count_;}
+            uint64_t GetSendPack(){return send_pack_count_;}
         private:
             std::atomic<uint64_t> recv_pack_count_; //收到的包数量
             std::atomic<uint64_t> send_pack_count_; //收到的包数量
@@ -234,6 +237,7 @@ class SafeQueue
             int32_t port_;      //监听的端口号
             int64_t last_time_; //上次通信的时间戳, 用来踢掉长时间不通讯的连接
             DataBufferPtr buff_;
+            
     };
     using SocketPtr = std::shared_ptr<Socket>;
 
@@ -272,7 +276,7 @@ class SafeQueue
             virtual void SetHandler(On_Socket_Handler h);
             virtual void OnNetMessage();
             virtual void KickOut();
-
+            MONITOR m;
         private:
             MSG    *msg_;  //当前消息
             TCP_STEP step_; //当前进度

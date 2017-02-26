@@ -226,15 +226,18 @@ auto on_accept = [](uint64_t id)  {
 
 };
 auto on_data = [](uint64_t id, const void* data, int32_t sz){
-     LOG(INFO) << "on_data id[" << id << "] sz [" << sz << "]" ;  
+     //LOG(INFO) << "on_data id[" << id << "] sz [" << sz << "]" ;  
      string msg((char*)data, sz);
      Person person;
      person.ParseFromString(msg);
-     LOG(INFO) << "name:" << person.name();
-     LOG(INFO) << "id:" << person.id();
-     LOG(INFO) << "result_per_page:" << person.result_per_page();
-     LOG(INFO) << "score:" << person.score();
-     LOG(INFO) << "phone:" << person.phone();
+     if(7 != person.id()){
+         LOG(ERROR) << "parse id fail id[" << person.id() << "]";
+     }
+    // LOG(INFO) << "name:" << person.name();
+    // LOG(INFO) << "id:" << person.id();
+    // LOG(INFO) << "result_per_page:" << person.result_per_page();
+    // LOG(INFO) << "score:" << person.score();
+    // LOG(INFO) << "phone:" << person.phone();
   
 };
 
@@ -268,7 +271,7 @@ void test_epoll() {
         int32_t sz = data.size() + sizeof(HEADER);        
         
         MSG *pMsg = (MSG* )buff_;
-        pMsg->header.version_ = 1000;
+        pMsg->header.version_ = VERSION;
         pMsg->header.size_ = data.size();
         pMsg->header.serial_ = 0;
         pMsg->header.reserve_ = 0;
@@ -276,37 +279,34 @@ void test_epoll() {
         memcpy(p + sizeof(HEADER), data.c_str(), data.size());
         //memcpy(&pMsg->body, data.c_str(), data.size());
     
-      //  string str(p + sizeof(HEADER), pMsg->header.size_);
-       // LOG(INFO) << "msg:" << str;
-      //  Person person2;
-      //  person2.ParseFromString(str);         
-      //  LOG(INFO) << "name2:" << person2.name();
-      //  LOG(INFO) << "id2:" << person2.id();
-      //  LOG(INFO) << "result_per_page2:" << person2.result_per_page();
-      //  LOG(INFO) << "score2:" << person2.score();
-      //  LOG(INFO) << "phone2:" << person2.phone() << "\n";
+
         int32_t sendcnt = 0;        
-        int32_t leftcnt = sz;    
-        for(auto c = 0; c < 100000; ++ c){
-         //   LOG(INFO) << "ccc:" << c;
-            
+        int32_t leftcnt = sz; 
+        int32_t wr = 0;
+        
+        for(auto c = 0; c < 1000000; ++ c){
+            char *sendbuf = buff_;
+            sendcnt = 0;  
+            leftcnt = sz; 
             //this_thread::sleep_for(std::chrono::seconds(1));
-            
             leftcnt = sz;
             while(leftcnt > 0){
-                sendcnt = NetPackage::Write(conn, buff_, sz);
-                if(sendcnt < 0){
+                //wr = NetPackage::Write(conn, sendbuf + sendcnt, sz); //这个是错误的
+                wr = NetPackage::Write(conn, sendbuf + sendcnt, leftcnt);
+                if(wr < 0){
                     if( EAGAIN == errno || EWOULDBLOCK == errno ){
+                        //LOG(INFO) << "EAGAIN happen";
                         continue;
                     }else{
                         return false;
                     }
-                }            
-                leftcnt -= sendcnt;       
+                }     
+                sendcnt += wr;
+                leftcnt -= wr;       
             }
-        }
-        
+        }       
     };
+    LOG(INFO) << "run ok";
     
     std::thread th1(svr_proc);    
     

@@ -492,12 +492,14 @@ MONITOR MONITOR_SVR;
     }
    
     void TCPSocket::OnNetMessage(){      
-        char *buff = svr_.get()->buff_;
+        //char *buff = svr_.get()->buff_;  //对数组操作一定要注意, 会有越界的可能
         for(;;){
-            //一直读, 直到出错 
-            LOG(INFO) << "before read fd[" << peer_.fd_ << "]";
-            int32_t ret = NetPackage::Read(peer_.fd_, buff, MAX_SOCK_BUFF);
-            LOG(INFO) << "after read ret[" << "ret]";
+            char *buff = svr_.get()->buff_;
+            //一直读, 直到出错           
+            int32_t ret = NetPackage::Read(peer_.fd_, buff, MAX_SOCK_BUFF); 
+            LOG(INFO) << "read ok ret[" << ret << "]";
+               
+                                                                                 
             if(0 == ret ){     
                 LOG(INFO) << "connection closed by peer fd[" << peer_.fd_ << "]";
                 this->KickOut();
@@ -516,21 +518,16 @@ MONITOR MONITOR_SVR;
                     this->KickOut();  
                     return;
                 }
-
             }
 
-
             int32_t more_data = ret;
-
+            
             while( more_data > 0){
-                if( nullptr == peer_.buff_.get() ){  
-                    LOG(INFO) << "before make shared";
-                    peer_.buff_ = std::make_shared<DataBuffer>(peer_.fd_, HEADER_SZ);      
-                    LOG(INFO) << "after make shared";
+                if( nullptr == peer_.buff_ ){                   
+                    peer_.buff_ = std::make_shared<DataBuffer>(peer_.fd_, HEADER_SZ); 
                 }
 
-                auto data_buffer = peer_.buff_.get();
-               
+                auto data_buffer = peer_.buff_.get();               
                 int32_t need_data = data_buffer->NeedData();
 
                 //读取包头
@@ -544,8 +541,15 @@ MONITOR MONITOR_SVR;
                     //指向body的头指针, 向前添加已经读过的内存
                     buff += need_data;
                     more_data = (more_data - need_data) < 0 ? 0:(more_data - need_data);
-
                     msg_ = (MSG* )data_buffer->GetBuffPtr();
+                    
+                    if(VERSION != msg_->header.version_){
+                        LOG(ERROR) << "version is not fit! kick out client fd[" << peer_.fd_ << "] version[" 
+                                  << msg_->header.version_ << "current version[" << VERSION<<"]";
+                        this->KickOut();
+                        LOG(INFO) << "receive msg count[" << m.GetRecvPack() << "]";
+                        return;
+                    }
 
                     //为body 申请内存
                     data_buffer->Resize(msg_->header.size_ + HEADER_SZ);  
@@ -568,12 +572,13 @@ MONITOR MONITOR_SVR;
                     more_data = (more_data - need_data) < 0 ? 0:(more_data - need_data);
                     //buff读取后指针后移
                     buff += need_data;
-
+                    
+                    m.AddRecvPack();
                     auto f = socket_handler_;
                     //客户程序只需要截获到数据信息就行, 不用关心包头                    
                     f(this->getID(), data_buffer->GetBuffPtr() + sizeof(HEADER),msg_->header.size_);
                     //自动删除已经用过的packet
-                    auto tmp = std::move(peer_.buff_);
+                    auto tmp = std::move(peer_.buff_);                    
                     peer_.buff_ = nullptr;//是不是多此一举, 就是多此一举, move 后peer_buff_ 会为nullptr
                     //读取新的包头
                     step_ = READ_HEAD;
