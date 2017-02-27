@@ -4,7 +4,7 @@ OBJECTPATH := ./obj/$(TARGETNAME)
 SRCPATH := ./src
 # 0 -- Application; 1 -- Static library; 2 -- Dynamic library
 TARGETTYPE = 0
-TARGETINCS = -I./include  -I../common/include -I../proto/protocols
+TARGETINCS = -I./include  -I../common/include -I../proto/protocols -I../../third/rapidjson
 TARGETLIBS = ../proto/bin/protocols.a #../protocol/OdaoMobileProto.a
 
 CPP = g++

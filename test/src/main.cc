@@ -4,6 +4,12 @@
 #include <thread>
 #include <chrono>
 #include <vector>
+#include <cstdio>
+
+#include "rapidjson/document.h"
+#include "rapidjson/writer.h"
+#include "rapidjson/stringbuffer.h"
+#include "rapidjson/filereadstream.h"
 
 #include "log.h"
 #include "epoll_svr.h"
@@ -217,7 +223,88 @@ void test_epoll_function()
 
     std::thread th1(svr);    
     th1.join();
-    
+
+}
+
+namespace Test_Rapid_Json {
+    //服务器的信息, 包括 ip, 端口, 名称, id
+    using namespace rapidjson;
+    class ServerConfig{
+        public:
+            ServerConfig(){
+                name_ = "";
+                ip_ = "";
+                port_ = -1;
+                id_ = -1;
+                connected_ = false;
+            }
+        public:
+            string name_;
+            string ip_;
+            int32_t port_;
+            int32_t id_;
+            bool   connected_;
+    };
+    class ServerInfo{
+        public:
+            ServerConfig config_;
+            vector<ServerConfig> connected_;
+    };
+
+    void parse_server_config(const Value& doc, ServerConfig& conf){
+        assert(doc.HasMember("id"));
+        assert(doc["id"].IsInt());
+        conf.id_ = doc["id"].GetInt();
+
+        assert(doc.HasMember("name"));
+        assert(doc["name"].IsString());
+        conf.name_ = doc["name"].GetString();
+
+        assert(doc.HasMember("ip"));
+        assert(doc["ip"].IsString());
+        conf.ip_ = doc["ip"].GetString();
+
+        assert(doc.HasMember("port"));
+        assert(doc["port"].IsInt());
+        conf.port_ = doc["port"].GetInt();
+
+    }
+    void test_rapid_json() {
+        ServerInfo info;
+        const char* json = "{\"project\":\"rapidjson\", \"stars\":10}";
+        Document d;
+        d.Parse(json);
+
+        Value& s = d["stars"];
+        s.SetInt(s.GetInt() + 1);
+
+        LOG(INFO) << "stars:" << s.GetInt();
+
+        string svr_ip = "";
+        int32_t svr_port = -1;
+        int32_t svr_id = -1;
+        FILE* fp = fopen("server_config.json", "r");
+        char readBuffer[1024 * 64];
+        FileReadStream is(fp, readBuffer, sizeof(readBuffer));
+        Document dconf;
+        dconf.ParseStream(is);
+        parse_server_config(dconf, info.config_);
+
+        assert(dconf.HasMember("connect"));
+        assert(dconf["connect"].IsArray());
+        info.connected_.clear();
+        const Value& value = dconf["connect"];
+
+        //for(Value::ConstValueIterator c = value.Begin(); c != value.End(); ++c){
+        for(SizeType c = 0; c < value.Size(); ++c){
+            ServerConfig con;
+            parse_server_config(value[c], con);
+            info.connected_.push_back(con);
+        }
+
+        fclose(fp);
+    }
+
 
 }
 auto count = make_shared<int32_t>(0);
@@ -328,9 +415,10 @@ int main(int argc, char* argv[])
     //testVec();
     //testQ();
     //test_sock_utils();
-    test_epoll();
+    //test_epoll();
     //test_epoll_function();
     //testMap();
+    Test_Rapid_Json::test_rapid_json();
 
 
     return 0;
