@@ -237,6 +237,7 @@ namespace Test_Rapid_Json {
                 port_ = -1;
                 id_ = -1;
                 connected_ = false;
+                
             }
         public:
             string name_;
@@ -247,8 +248,17 @@ namespace Test_Rapid_Json {
     };
     class ServerInfo{
         public:
+            ServerInfo(){
+                open_reconnect_ = 1;
+                time_out_ = 10;
+                max_count_ = 10;
+            }
             ServerConfig config_;
             vector<ServerConfig> connected_;
+            int32_t open_reconnect_;
+            int32_t time_out_;
+            int32_t max_count_;
+            
     };
 
     void parse_server_config(const Value& doc, ServerConfig& conf){
@@ -267,44 +277,73 @@ namespace Test_Rapid_Json {
         assert(doc.HasMember("port"));
         assert(doc["port"].IsInt());
         conf.port_ = doc["port"].GetInt();
+        
+        LOG(INFO) << "id[" << conf.id_ << "] name[" << conf.name_  << "] ip[" << conf.ip_  << "] port[" << conf.port_  << "]";
 
     }
-    void test_rapid_json() {
-        ServerInfo info;
-        const char* json = "{\"project\":\"rapidjson\", \"stars\":10}";
-        Document d;
-        d.Parse(json);
+    void parse_net_init(const Value& doc, ServerInfo* info){
+        parse_server_config(doc, info->config_);
 
-        Value& s = d["stars"];
-        s.SetInt(s.GetInt() + 1);
-
-        LOG(INFO) << "stars:" << s.GetInt();
-
-        string svr_ip = "";
-        int32_t svr_port = -1;
-        int32_t svr_id = -1;
-        FILE* fp = fopen("server_config.json", "r");
-        char readBuffer[1024 * 64];
-        FileReadStream is(fp, readBuffer, sizeof(readBuffer));
-        Document dconf;
-        dconf.ParseStream(is);
-        parse_server_config(dconf, info.config_);
-
-        assert(dconf.HasMember("connect"));
-        assert(dconf["connect"].IsArray());
-        info.connected_.clear();
-        const Value& value = dconf["connect"];
-
-        //for(Value::ConstValueIterator c = value.Begin(); c != value.End(); ++c){
+        assert(doc.HasMember("connect"));
+        assert(doc["connect"].IsArray());
+        info->connected_.clear();
+        const Value& value = doc["connect"];
+        LOG(INFO) << "connected servers:";
         for(SizeType c = 0; c < value.Size(); ++c){
             ServerConfig con;
             parse_server_config(value[c], con);
-            info.connected_.push_back(con);
+            info->connected_.push_back(con);
         }
-
-        fclose(fp);
     }
-
+    void parse_rec_init(const Value& doc, int32_t &open, int32_t &time, int32_t &max){
+        assert(doc.HasMember("open_reconnect"));
+        assert(doc["open_reconnect"].IsInt());
+        open = doc["open_reconnect"].GetInt();
+        
+        assert(doc.HasMember("time_out"));
+        assert(doc["time_out"].IsInt());
+        time = doc["time_out"].GetInt();
+        
+        assert(doc.HasMember("max_count"));
+        assert(doc["max_count"].IsInt());
+        max = doc["max_count"].GetInt();
+    }
+    
+    ServerInfo* load_server_config() {
+        {
+            const char* json = "{\"project\":\"rapidjson\", \"stars\":10}";
+            Document d;
+            d.Parse(json);
+            Value& s = d["stars"];
+            s.SetInt(s.GetInt() + 1);
+            LOG(INFO) << "stars:" << s.GetInt();
+        }
+        ServerInfo *info = new ServerInfo;
+        FILE* fp = fopen("server_config.json", "r");
+        char readBuffer[1024 * 1];
+        FileReadStream is(fp, readBuffer, sizeof(readBuffer));
+        Document dconf;
+        dconf.ParseStream(is);
+        
+        assert(dconf.HasMember("net_init"));
+        const auto& net = dconf["net_init"];
+        parse_net_init(net, info);
+        
+        assert(dconf.HasMember("reconnect_init"));
+        const auto& rec = dconf["reconnect_init"];
+        
+        int32_t open_re = 0;
+        int32_t time_out = 0;
+        int32_t max_count = 0;
+        parse_rec_init(rec, open_re, time_out, max_count);  
+        LOG(INFO) << "open_reconnect[" << open_re << "] time_out[" << time_out <<  "] max_count[" << max_count << "]";
+        info->open_reconnect_ = open_re;
+        info->time_out_ = time_out;
+        info->max_count_ = max_count;
+        fclose(fp);
+        return info;
+    }
+    
 
 }
 auto count = make_shared<int32_t>(0);
@@ -331,10 +370,19 @@ auto on_data = [](uint64_t id, const void* data, int32_t sz){
 void test_epoll() {
     
     auto svr_proc = []{
+        Test_Rapid_Json::ServerInfo *info = Test_Rapid_Json::load_server_config();
+        
         EPOLLSvrPtr svr = std::make_shared<EPOLLSvr>();
         auto m = on_accept;
         auto server = svr.get();
-        server->Init(30077, 3000, m, on_data);    
+        server->Init(info->config_.port_, 3000, m, on_data);
+        for(auto v : info->connected_){
+            if(server->Connect(v.ip_, v.port_, true)){
+                LOG(INFO) << "connect server[" << v.name_ << "] ip[" << v.ip_ << "] port[" << v.port_ << "] succed" ;
+            }
+            
+        }
+            
         server->Start();
     };
     
@@ -363,7 +411,8 @@ void test_epoll() {
         pMsg->header.serial_ = 0;
         pMsg->header.reserve_ = 0;
         char *p = (char*)pMsg;
-        memcpy(p + sizeof(HEADER), data.c_str(), data.size());
+        p += sizeof(HEADER);
+        memcpy(p, data.c_str(), data.size());
         //memcpy(&pMsg->body, data.c_str(), data.size());
     
 
@@ -395,31 +444,51 @@ void test_epoll() {
         
         close(conn);
     };
-    LOG(INFO) << "run ok";
-    
     std::thread th1(svr_proc);    
     
-    std::thread th2(cli_proc); 
-    std::thread th3(cli_proc); 
-    th2.join();
+    //std::thread th2(cli_proc); 
+    //std::thread th3(cli_proc);
     th1.join();
-    th3.join();
+    //th2.join();    
+    //th3.join();
 
 }
 
+void test_client(){
+    
+    
+}
 int main(int argc, char* argv[])
 {
+    
     LOGInfo log;
     log.Init("main", true);
     //chrono_test();
     //testVec();
     //testQ();
-    //test_sock_utils();
-    //test_epoll();
+    //test_sock_utils();    
     //test_epoll_function();
     //testMap();
-    Test_Rapid_Json::test_rapid_json();
-
+    //Test_Rapid_Json::load_server_config();
+    //test_epoll();
+    
+    //if( 2 != argc){
+    //    LOG(ERROR) << "usage:";
+    //    LOG(ERROR) << "please type \"main.run s\" for run server or \"main.run c\" for client:";
+    //    exit(0);
+   // }
+    //string arg = argv[1];
+    //if(arg == "s") {
+        LOG(INFO) << "Server Running";
+        test_epoll();
+        
+    //}else if(arg == "c"){
+     //   LOG(INFO) << "Client Running";
+    //}else{
+    //    LOG(ERROR) << "usage:";
+   //     LOG(ERROR) << "please type \"main.run s\" for run server or \"main.run c\" for client:";
+    //    test_client();
+   // }
 
     return 0;
 }

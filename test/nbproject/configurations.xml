@@ -44,6 +44,7 @@
               <pElem>include</pElem>
               <pElem>../common/include</pElem>
               <pElem>../proto/protocols</pElem>
+              <pElem>../../third/rapidjson</pElem>
               <pElem>.</pElem>
             </incDir>
             <preprocessorList>

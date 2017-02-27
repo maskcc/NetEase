@@ -50,6 +50,7 @@ class EPOLLSvr;
 using EPOLLSvrPtr = std::shared_ptr<EPOLLSvr>;
 using On_Accept_Handler = std::function<void(uint64_t)>;
 using On_Socket_Handler = std::function<void(uint64_t, const void*, int32_t)>;
+using On_Reconnect_Handler = std::function<void()>;
 //定时器
 //定时执行过程, 能够添加过程, 删除过程
 //写在主线程中, 能处理主线程数据, 在epoll里处理, epoll超时单位为毫秒
@@ -269,7 +270,7 @@ class SafeQueue
         READ_BODY
     };
 //已连接的服务器
-    class TCPSocket : public IPlayer
+    class TCPSocket : public IPlayer 
     {
         public:
             TCPSocket(EPOLLSvrPtr s);
@@ -280,6 +281,7 @@ class SafeQueue
         private:
             MSG    *msg_;  //当前消息
             TCP_STEP step_; //当前进度
+            bool connected_;
             
             On_Socket_Handler socket_handler_;
             EPOLLSvrPtr svr_;                    //epoll svr
@@ -313,15 +315,25 @@ class SafeQueue
     };
     using UDPSocketPtr = std::shared_ptr<UDPSocket>;
 
-    class TCPConnection : public IPlayer
+    class TCPConnector : public TCPSocket
     {
         public:
             //自动重连 
-            void OnReconnect(){}
-            bool Connect(){}
+            //do_re 是否自动重连
+            //time 断开后重连间隔 10秒
+            // max_count 最多重连次数
+            TCPConnector(EPOLLSvrPtr svr, bool do_re = true, int32_t time = 10, int32_t max_count = 10);              
+            void OnReconnect();
+            
+            bool Connect();
         private:
+            //重连方法
+            On_Reconnect_Handler handler_;
+            //是不是已经连接 
+            bool connected_; 
             //是否进行重连
             bool do_reconn_; 
+            
             //重连时间
             int32_t reconn_time_; 
             //重连次数
@@ -330,7 +342,7 @@ class SafeQueue
             int32_t max_reconn_count_; 
 
     };
-    using TCPConnectorPtr = std::shared_ptr<TCPConnection>;
+    using TCPConnectorPtr = std::shared_ptr<TCPConnector>;
 
 //定义 epoll_event
 using EPOLL_EV = struct epoll_event;
@@ -369,7 +381,7 @@ using EPOLL_EV = struct epoll_event;
                       int32_t timeout = 30,int32_t window = 2048,  bool nodelay = true);  
             bool Start();
             bool SendMessage(IPlayerPtr player, void *msg, int32_t sz);
-            bool Connect(std::string dest, bool reconnect); //是否重连
+            bool Connect(std::string dest, int32_t port, bool reconnect); //是否重连
             int32_t Wait();
             int32_t Svc(int32_t c);
             

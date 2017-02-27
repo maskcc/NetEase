@@ -80,7 +80,7 @@
         
     }
     const void* DataBuffer::GetBuffPtr(){
-        return &buf_[0];        
+        return static_cast<const void*>(&buf_[0]);        
     }
 
 //统计信息
@@ -411,16 +411,17 @@ MONITOR MONITOR_SVR;
     bool EPOLLSvr::SendMessage(IPlayerPtr player, void* msg, int32_t sz) {
         //TODO 添加发送缓冲区, 异步发送
         //先阻塞发送
+        char *pPos = buff_;
         MSG *pMsg = (MSG* )buff_;
         pMsg->header.version_ = 1000;
         pMsg->header.size_ = sz;
         pMsg->header.serial_ = 0;
         pMsg->header.reserve_ = 0;
-        memcpy(pMsg->body, msg, sz);
+        memcpy(pPos + sizeof(HEADER), msg, sz);
         int32_t sendcnt = 0;        
         int32_t leftcnt = sz;        
         while(leftcnt > 0){
-            sendcnt = NetPackage::Write(player.get()->peer_.fd_, buff_, sz);
+            sendcnt = NetPackage::Write(player.get()->peer_.fd_, pPos, leftcnt);
             if(sendcnt < 0){
                 if( EAGAIN == errno || EWOULDBLOCK == errno ){
                     continue;
@@ -428,12 +429,20 @@ MONITOR MONITOR_SVR;
                     return false;
                 }
             }            
-            leftcnt -= sendcnt;       
+            leftcnt -= sendcnt;   
+            pPos += sendcnt;
         }
         return true;
     }
-    bool EPOLLSvr::Connect(std::string dest, bool reconnect) {
-
+    bool EPOLLSvr::Connect(std::string dest, int32_t port, bool reconnect) {
+        TCPConnectorPtr conn = std::make_shared<TCPConnector>(shared_from_this());
+        
+        TCPConnector * c = conn.get();
+        c->peer_.addr_ = dest;
+        c->peer_.port_ = port;
+        c->Connect();
+        
+        this->AddConnection(conn);
     }
 
     int32_t EPOLLSvr::Svc(int32_t c) {        
@@ -491,7 +500,11 @@ MONITOR MONITOR_SVR;
         
     }
    
-    void TCPSocket::OnNetMessage(){      
+    void TCPSocket::OnNetMessage(){    
+        if( nullptr == socket_handler_){                        
+            LOG(FATAL) << "tcpsocket handler is nullptr!";
+            return;
+        }        
         //char *buff = svr_.get()->buff_;  //对数组操作一定要注意, 会有越界的可能
         for(;;){
             char *buff = svr_.get()->buff_;
@@ -574,11 +587,20 @@ MONITOR MONITOR_SVR;
                     buff += need_data;
                     
                     m.AddRecvPack();
+                                
+                    //客户程序只需要截获到数据信息就行, 不用关心包头   
+                    char *pMsg = (char* )(data_buffer->GetBuffPtr());
+                    pMsg +=  sizeof(HEADER);
+                    
                     auto f = socket_handler_;
-                    //客户程序只需要截获到数据信息就行, 不用关心包头                    
-                    f(this->getID(), data_buffer->GetBuffPtr() + sizeof(HEADER),msg_->header.size_);
+                    try{
+                        f(this->getID(), pMsg,msg_->header.size_);
+                    }catch(...){
+                        LOG(ERROR) << "tcpsocket handler run fail!";                        
+                    }                    
                     //自动删除已经用过的packet
-                    auto tmp = std::move(peer_.buff_);                    
+                    auto tmp = std::move(peer_.buff_);     
+                    tmp = nullptr;
                     peer_.buff_ = nullptr;//是不是多此一举, 就是多此一举, move 后peer_buff_ 会为nullptr
                     //读取新的包头
                     step_ = READ_HEAD;
@@ -592,6 +614,42 @@ MONITOR MONITOR_SVR;
         //TODO 需要再 EPOLLSvr 的map 中删除事件events_map_ 和连接信息 player_map_
     }
 
+//TCPConnector 连接别的服务器
+     TCPConnector::TCPConnector(EPOLLSvrPtr svr, bool do_re, int32_t time, int32_t max_count):TCPSocket(svr) {
+         do_reconn_ = do_re;
+         reconn_time_ = time;
+         max_reconn_count_ = max_count;
+         reconn_count_ = 0;
+         connected_ = false;
+    }
+    bool TCPConnector::Connect(){
+        bool retCode = false;
+        if(connected_){
+            LOG(WARNING) << "已经在连接状态但是还是重连了! ip[" << peer_.addr_ << "] port[" << peer_.port_ << "]";
+            return true;
+        }
+        retCode = NetPackage::Connect(&peer_.fd_, peer_.addr_, peer_.port_);
+        if(!retCode){
+            LOG(ERROR) << "connect server fail ip[" << peer_.addr_ << "] port[" << peer_.port_ << "]";
+            return false;
+        }
+        connected_ = true;        
+        return true;
+    }
+    void TCPConnector::OnReconnect(){
+        if( nullptr == handler_){
+            LOG(FATAL) << "reconnect handler is nullptr!";
+            return;
+        }
+        auto f = handler_;
+        try{
+            f();
+        }catch(...){
+            LOG(ERROR) << "reconnect handler run fail!";
+        }
+    }
+    
+    
 //TCPAccept
     TCPAccept::TCPAccept(int32_t port, EPOLLSvrPtr s) {
         peer_.port_ = port;
@@ -613,6 +671,10 @@ MONITOR MONITOR_SVR;
     TCPAccept::~TCPAccept() {
     }
     void TCPAccept::OnNetMessage() {
+        if( nullptr == accept_handler_){
+            LOG(FATAL) << "tcpsocket handler is nullptr!";
+            return;
+        }  
         int32_t cliFD = NetPackage::kINVALID_FD;
         std::string ip = "";
         uint16_t port = 0;
@@ -635,9 +697,15 @@ MONITOR MONITOR_SVR;
             NetPackage::SetNoDelay(cliFD);
             NetPackage::SetReuse(cliFD);
        
-            svr_.get()->AddConnection(sock);            
+            svr_.get()->AddConnection(sock);   
+            
             auto f = accept_handler_;
-            f(client->getID());
+            try{
+                f(client->getID());
+            }catch(...){
+                LOG(ERROR) << "tcpsocket handler run fail!";
+            }
+            
         //}while(ret);
         
     }

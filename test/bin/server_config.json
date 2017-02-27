@@ -1,10 +1,18 @@
 {
-	"id": 177,
-	"name": "center_svr",
-	"ip": "127.0.0.1",
-	"port": 30077,
-	"connect":[
-		{"id": 178, "name":"db_svr", "ip":"127.0.0.1", "port":66633},
-		{"id": 179, "name":"gate_svr", "ip":"127.0.0.1", "port":77788}
-	]
+	"net_init":{
+		"id": 177,
+		"name": "center_svr",
+		"ip": "127.0.0.1",
+		"port": 30077,
+		"connect":[
+			{"id": 178, "name":"db_svr", "ip":"127.0.0.1", "port":6663},
+			{"id": 179, "name":"gate_svr", "ip":"127.0.0.1", "port":7778}
+		]
+	},
+
+	"reconnect_init":{
+		"open_reconnect": 1,
+		"time_out": 30, 
+		"max_count": -1
+	}
 }
