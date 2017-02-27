@@ -304,7 +304,9 @@ void test_epoll() {
                 sendcnt += wr;
                 leftcnt -= wr;       
             }
-        }       
+        }    
+        
+        close(conn);
     };
     LOG(INFO) << "run ok";
     

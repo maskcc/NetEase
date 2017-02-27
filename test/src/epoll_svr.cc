@@ -545,7 +545,7 @@ MONITOR MONITOR_SVR;
                     
                     if(VERSION != msg_->header.version_){
                         LOG(ERROR) << "version is not fit! kick out client fd[" << peer_.fd_ << "] version[" 
-                                  << msg_->header.version_ << "current version[" << VERSION<<"]";
+                                  << msg_->header.version_ << "] current version[" << VERSION<<"]";
                         this->KickOut();
                         LOG(INFO) << "receive msg count[" << m.GetRecvPack() << "]";
                         return;
