@@ -408,12 +408,12 @@ MONITOR MONITOR_SVR;
 
     }
 
-    bool EPOLLSvr::SendMessage(IPlayerPtr player, void* msg, int32_t sz) {
+    bool EPOLLSvr::SendMessage(IPlayerPtr player, const void* msg, int32_t sz) {
         //TODO 添加发送缓冲区, 异步发送
         //先阻塞发送
         char *pPos = buff_;
         MSG *pMsg = (MSG* )buff_;
-        pMsg->header.version_ = 1000;
+        pMsg->header.version_ = VERSION;
         pMsg->header.size_ = sz;
         pMsg->header.serial_ = 0;
         pMsg->header.reserve_ = 0;
@@ -434,7 +434,7 @@ MONITOR MONITOR_SVR;
         }
         return true;
     }
-    bool EPOLLSvr::Connect(std::string dest, int32_t port, bool reconnect) {
+    TCPConnectorPtr EPOLLSvr::Connect(std::string dest, int32_t port, bool reconnect) {
         TCPConnectorPtr conn = std::make_shared<TCPConnector>(shared_from_this());
         
         TCPConnector * c = conn.get();
@@ -443,6 +443,7 @@ MONITOR MONITOR_SVR;
         c->Connect();
         
         this->AddConnection(conn);
+        return conn;
     }
 
     int32_t EPOLLSvr::Svc(int32_t c) {        

@@ -359,11 +359,11 @@ auto on_data = [](uint64_t id, const void* data, int32_t sz){
      if(7 != person.id()){
          LOG(ERROR) << "parse id fail id[" << person.id() << "]";
      }
-    // LOG(INFO) << "name:" << person.name();
-    // LOG(INFO) << "id:" << person.id();
-    // LOG(INFO) << "result_per_page:" << person.result_per_page();
-    // LOG(INFO) << "score:" << person.score();
-    // LOG(INFO) << "phone:" << person.phone();
+     LOG(INFO) << "name:" << person.name();
+     LOG(INFO) << "id:" << person.id();
+     LOG(INFO) << "result_per_page:" << person.result_per_page();
+     LOG(INFO) << "score:" << person.score();
+     LOG(INFO) << "phone:" << person.phone();
   
 };
 
@@ -376,14 +376,22 @@ void test_epoll() {
         auto m = on_accept;
         auto server = svr.get();
         server->Init(info->config_.port_, 3000, m, on_data);
+        std::vector<TCPConnectorPtr> ivec;
         for(auto v : info->connected_){
-            if(server->Connect(v.ip_, v.port_, true)){
-                LOG(INFO) << "connect server[" << v.name_ << "] ip[" << v.ip_ << "] port[" << v.port_ << "] succed" ;
-            }
-            
+            auto conn = server->Connect(v.ip_, v.port_, true);
+            ivec.push_back(conn);
         }
-            
-        server->Start();
+        Person person;
+        person.set_name("Jack");
+        person.set_id(7);
+        person.set_result_per_page(9);
+        person.set_score(Person::GOOD);
+        person.set_phone("18221888856");
+        string data;
+        person.SerializeToString(&data);   
+        server->SendMessage(ivec.front(), data.c_str(), data.size());
+        server->SendMessage(ivec.back(), data.c_str(), data.size());
+        //server->Start();
     };
     
     auto cli_proc = []{
