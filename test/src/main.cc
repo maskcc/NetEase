@@ -376,11 +376,12 @@ void test_epoll() {
         auto m = on_accept;
         auto server = svr.get();
         server->Init(info->config_.port_, 3000, m, on_data);
-        std::vector<TCPConnectorPtr> ivec;
+       /* std::vector<TCPConnectorPtr> ivec;
         for(auto v : info->connected_){
             auto conn = server->Connect(v.ip_, v.port_, true);
             ivec.push_back(conn);
         }
+        
         Person person;
         person.set_name("Jack");
         person.set_id(7);
@@ -390,8 +391,8 @@ void test_epoll() {
         string data;
         person.SerializeToString(&data);   
         server->SendMessage(ivec.front(), data.c_str(), data.size());
-        server->SendMessage(ivec.back(), data.c_str(), data.size());
-        //server->Start();
+        server->SendMessage(ivec.back(), data.c_str(), data.size());*/
+        server->Start();
     };
     
     auto cli_proc = []{
