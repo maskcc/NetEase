@@ -96,6 +96,7 @@ MONITOR MONITOR_SVR;
         return fcntl((fd), F_SETFL, fcntl(fd, F_GETFL)|O_NONBLOCK) == 0;
     }
 
+    //关闭 Nagle 算法
     bool NetPackage::SetNoDelay(int fd) {
         int bTrue = true?1:0; return setsockopt(fd, IPPROTO_TCP, TCP_NODELAY, (char*)&bTrue, sizeof(bTrue)) == 0;
     }
@@ -118,7 +119,8 @@ MONITOR MONITOR_SVR;
         }
         SetNonBlock(fd);
         if(reuse){
-            SetReuse(fd);
+        //    SetReuse(fd);
+            //暂时不设置这个
         }
 
         if(isV6){
@@ -696,7 +698,8 @@ MONITOR MONITOR_SVR;
 
             NetPackage::SetNonBlock(cliFD);
             NetPackage::SetNoDelay(cliFD);
-            NetPackage::SetReuse(cliFD);
+            //这个设置很危险, (http://coolshell.cn/articles/11564.html)
+            //NetPackage::SetReuse(cliFD);
        
             svr_.get()->AddConnection(sock);   
             
