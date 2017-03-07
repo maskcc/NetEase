@@ -14,7 +14,9 @@
 #include "log.h"
 #include "epoll_svr.h"
 #include "book.pb.h"
+#include "safe_queue.h"
 using namespace std;
+using namespace easynet;
 //TODO:  还没做完
 //FIXME: 你说呢
 //XXX: WHAT?
@@ -376,22 +378,7 @@ void test_epoll() {
         auto m = on_accept;
         auto server = svr.get();
         server->Init(info->config_.port_, 3000, m, on_data);
-       /* std::vector<TCPConnectorPtr> ivec;
-        for(auto v : info->connected_){
-            auto conn = server->Connect(v.ip_, v.port_, true);
-            ivec.push_back(conn);
-        }
-        
-        Person person;
-        person.set_name("Jack");
-        person.set_id(7);
-        person.set_result_per_page(9);
-        person.set_score(Person::GOOD);
-        person.set_phone("18221888856");
-        string data;
-        person.SerializeToString(&data);   
-        server->SendMessage(ivec.front(), data.c_str(), data.size());
-        server->SendMessage(ivec.back(), data.c_str(), data.size());*/
+     
         server->Start();
     };
     
@@ -467,11 +454,12 @@ void test_client(){
     
     
 }
+ 
 int main(int argc, char* argv[])
 {
     
-    LOGInfo log;
-    log.Init("main", true);
+    //LOGInfo log;
+    //log.Init("main", true);
     //chrono_test();
     //testVec();
     //testQ();
@@ -479,7 +467,7 @@ int main(int argc, char* argv[])
     //test_epoll_function();
     //testMap();
     //Test_Rapid_Json::load_server_config();
-    //test_epoll();
+    test_epoll();
     
     //if( 2 != argc){
     //    LOG(ERROR) << "usage:";
@@ -488,8 +476,8 @@ int main(int argc, char* argv[])
    // }
     //string arg = argv[1];
     //if(arg == "s") {
-        LOG(INFO) << "Server Running";
-        test_epoll();
+     //   LOG(INFO) << "Server Running";
+    //    test_epoll();
         
     //}else if(arg == "c"){
      //   LOG(INFO) << "Client Running";

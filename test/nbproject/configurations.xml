@@ -2,9 +2,33 @@
 <configurationDescriptor version="97">
   <logicalFolder name="root" displayName="root" projectFiles="true" kind="ROOT">
     <df root="." name="0">
+      <df name="include">
+        <in>data_buffer.h</in>
+        <in>iplayer.h</in>
+        <in>monitor.h</in>
+        <in>net_package.h</in>
+        <in>safe_queue.h</in>
+        <in>socket.h</in>
+        <in>svr_define.h</in>
+        <in>tcp_accept.h</in>
+        <in>tcp_connector.h</in>
+        <in>tcp_event.h</in>
+        <in>tcp_socket.h</in>
+        <in>timer.h</in>
+        <in>udp_socket.h</in>
+      </df>
       <df name="src">
         <in>epoll_svr.cc</in>
+        <in>iplayer.cc</in>
         <in>main.cc</in>
+        <in>net_package.cc</in>
+        <in>safe_queue.cc</in>
+        <in>socket.cc</in>
+        <in>tcp_accept.cc</in>
+        <in>tcp_connector.cc</in>
+        <in>tcp_evnet.cc</in>
+        <in>tcp_socket.cc</in>
+        <in>timer.cc</in>
       </df>
     </df>
     <logicalFolder name="ExternalFiles"
@@ -58,13 +82,57 @@
           <preBuildCommand></preBuildCommand>
         </preBuild>
       </makefileType>
+      <item path="include/data_buffer.h" ex="false" tool="3" flavor2="0">
+      </item>
+      <item path="include/iplayer.h" ex="false" tool="3" flavor2="0">
+      </item>
+      <item path="include/monitor.h" ex="false" tool="3" flavor2="0">
+      </item>
+      <item path="include/net_package.h" ex="false" tool="3" flavor2="0">
+      </item>
+      <item path="include/safe_queue.h" ex="false" tool="3" flavor2="0">
+      </item>
+      <item path="include/socket.h" ex="false" tool="3" flavor2="0">
+      </item>
+      <item path="include/svr_define.h" ex="false" tool="3" flavor2="0">
+      </item>
+      <item path="include/tcp_accept.h" ex="false" tool="3" flavor2="0">
+      </item>
+      <item path="include/tcp_connector.h" ex="false" tool="3" flavor2="0">
+      </item>
+      <item path="include/tcp_event.h" ex="false" tool="3" flavor2="0">
+      </item>
+      <item path="include/tcp_socket.h" ex="false" tool="3" flavor2="0">
+      </item>
+      <item path="include/timer.h" ex="false" tool="3" flavor2="0">
+      </item>
+      <item path="include/udp_socket.h" ex="false" tool="3" flavor2="0">
+      </item>
       <item path="src/epoll_svr.cc" ex="false" tool="1" flavor2="8">
         <ccTool flags="0">
         </ccTool>
       </item>
+      <item path="src/iplayer.cc" ex="false" tool="1" flavor2="0">
+      </item>
       <item path="src/main.cc" ex="false" tool="1" flavor2="8">
         <ccTool flags="0">
         </ccTool>
+      </item>
+      <item path="src/net_package.cc" ex="false" tool="1" flavor2="0">
+      </item>
+      <item path="src/safe_queue.cc" ex="false" tool="1" flavor2="0">
+      </item>
+      <item path="src/socket.cc" ex="false" tool="1" flavor2="0">
+      </item>
+      <item path="src/tcp_accept.cc" ex="false" tool="1" flavor2="0">
+      </item>
+      <item path="src/tcp_connector.cc" ex="false" tool="1" flavor2="0">
+      </item>
+      <item path="src/tcp_evnet.cc" ex="false" tool="1" flavor2="0">
+      </item>
+      <item path="src/tcp_socket.cc" ex="false" tool="1" flavor2="0">
+      </item>
+      <item path="src/timer.cc" ex="false" tool="1" flavor2="0">
       </item>
     </conf>
   </confs>

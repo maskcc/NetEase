@@ -7,15 +7,38 @@
         </df>
       </df>
       <df name="include">
+        <in>data_buffer.h</in>
         <in>epoll_svr.h</in>
+        <in>iplayer.h</in>
+        <in>monitor.h</in>
+        <in>net_package.h</in>
+        <in>safe_queue.h</in>
+        <in>socket.h</in>
+        <in>svr_define.h</in>
+        <in>tcp_accept.h</in>
+        <in>tcp_connector.h</in>
+        <in>tcp_event.h</in>
+        <in>tcp_socket.h</in>
+        <in>timer.h</in>
+        <in>udp_socket.h</in>
       </df>
       <df name="obj">
         <df name="main.run">
         </df>
       </df>
       <df name="src">
+        <in>data_buffer.cc</in>
         <in>epoll_svr.cc</in>
+        <in>iplayer.cc</in>
         <in>main.cc</in>
+        <in>net_package.cc</in>
+        <in>safe_queue.cc</in>
+        <in>socket.cc</in>
+        <in>tcp_accept.cc</in>
+        <in>tcp_connector.cc</in>
+        <in>tcp_evnet.cc</in>
+        <in>tcp_socket.cc</in>
+        <in>timer.cc</in>
       </df>
     </df>
   </logicalFolder>
@@ -44,8 +67,6 @@
         <gdb_interceptlist>
           <gdbinterceptoptions gdb_all="false" gdb_unhandled="true" gdb_unexpected="true"/>
         </gdb_interceptlist>
-        <gdb_signals>
-        </gdb_signals>
         <gdb_options>
           <DebugOptions>
           </DebugOptions>
