@@ -22,15 +22,14 @@ namespace DDZ.Protos {
     static BookReflection() {
       byte[] descriptorData = global::System.Convert.FromBase64String(
           string.Concat(
-            "Cgpib29rLnByb3RvEgR0ZXN0IpUBCgZQZXJzb24SDAoEbmFtZRgBIAEoCRIK",
-            "CgJpZBgCIAEoBRIXCg9yZXN1bHRfcGVyX3BhZ2UYAyABKAUSIQoFc2NvcmUY",
-            "BCABKA4yEi50ZXN0LlBlcnNvbi5TY29yZRINCgVwaG9uZRgFIAEoCSImCgVT",
-            "Y29yZRIICgRHT09EEAASCgoGTk9STUFMEAESBwoDQkFEEAIiKAoIQWRkckJv",
-            "b2sSHAoGcGVvcGxlGAEgAygLMgwudGVzdC5QZXJzb24iOgoITG9naW5SZXES",
-            "DAoEbmFtZRgBIAEoCRIOCgZwYXNzd2QYAiABKAkSEAoIcGxhdGZvcm0YAyAB",
-            "KAUiQQoITG9naW5Sc3ASCwoDZXJyGAEgASgFEgoKAmlkGAIgASgFEg4KBmdl",
-            "bmRlchgDIAEoBRIMCgRzaWduGAQgASgJQg2qAgpERFouUHJvdG9zYgZwcm90",
-            "bzM="));
+            "Cgpib29rLnByb3RvIpABCgZQZXJzb24SDAoEbmFtZRgBIAEoCRIKCgJpZBgC",
+            "IAEoBRIXCg9yZXN1bHRfcGVyX3BhZ2UYAyABKAUSHAoFc2NvcmUYBCABKA4y",
+            "DS5QZXJzb24uU2NvcmUSDQoFcGhvbmUYBSABKAkiJgoFU2NvcmUSCAoER09P",
+            "RBAAEgoKBk5PUk1BTBABEgcKA0JBRBACIiMKCEFkZHJCb29rEhcKBnBlb3Bs",
+            "ZRgBIAMoCzIHLlBlcnNvbiI6CghMb2dpblJlcRIMCgRuYW1lGAEgASgJEg4K",
+            "BnBhc3N3ZBgCIAEoCRIQCghwbGF0Zm9ybRgDIAEoBSJBCghMb2dpblJzcBIL",
+            "CgNlcnIYASABKAUSCgoCaWQYAiABKAUSDgoGZ2VuZGVyGAMgASgFEgwKBHNp",
+            "Z24YBCABKAlCDaoCCkREWi5Qcm90b3NiBnByb3RvMw=="));
       descriptor = pbr::FileDescriptor.FromGeneratedCode(descriptorData,
           new pbr::FileDescriptor[] { },
           new pbr::GeneratedClrTypeInfo(null, new pbr::GeneratedClrTypeInfo[] {
