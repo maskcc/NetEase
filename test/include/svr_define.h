@@ -46,12 +46,16 @@
 const int32_t MAX_EVENTS = 128;
 const int32_t MAX_SOCK_BUFF = 1024 * 64; //网络上最大的包大小为 64K
 
-const int32_t VERSION = 1001;
+const uint8_t VERSION = 0x99;
 using HEADER = struct tagHEADER {
-    uint16_t version_;  //版本 
-    uint16_t size_;     //包体大小, 最大 65535     
-    uint16_t serial_;   //TODO 序列, 类似tcp 序列字段, 序号不对断开连接?
-    uint16_t reserve_;  //保留字段   
+    uint8_t   version_;   //版本号
+    uint8_t   encode_;    
+    uint8_t   reserve_;   //是否反序
+    uint8_t   state_;     //TODO 序列, 类似tcp 序列字段, 序号不对断开连接?
+    int16_t  length_;    //包体大小, 最大 65535     
+    int16_t  type_;
+    
+    
 };
 //包头大小
 const int32_t HEADER_SZ = sizeof(HEADER);
@@ -63,7 +67,7 @@ using MSG = struct tagMSG {
 
 
 using On_Accept_Handler = std::function<void(uint64_t)>;
-using On_Socket_Handler = std::function<void(uint64_t, const void*, int32_t)>;
+using On_Socket_Handler = std::function<void(uint64_t, const void*, int32_t, int32_t)>;
 using On_Reconnect_Handler = std::function<void()>;
 
 

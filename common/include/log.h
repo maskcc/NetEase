@@ -1,3 +1,6 @@
+#ifndef LOG_H
+#define LOG_H
+
 #include <stdint.h>
 #include <string>
 #include "glog/logging.h"
@@ -34,3 +37,4 @@ class LOGInfo
 
 };
 
+#endif

@@ -14,5 +14,10 @@
             <file>rfs://svr@10.0.0.128:22/home/svr/projects/NetEase/NetEase/test/src/epoll%5F%73%76%72%2E%63%63</file>
             <file>rfs://svr@10.0.0.128:22/home/svr/projects/NetEase/NetEase/test/include/epoll%5F%73%76%72%2E%68</file>
         </group>
+        <group>
+            <file>rfs://svr@192.168.0.128:22/home/svr/projects/NetEase/NetEase/test/include/ddz%5F%73%65%72%76%65%72%2E%68</file>
+            <file>rfs://svr@192.168.0.128:22/home/svr/projects/NetEase/NetEase/test/src/main.cc</file>
+            <file>rfs://svr@192.168.0.128:22/home/svr/projects/NetEase/NetEase/test/src/ddz%5F%73%65%72%76%65%72%2E%63%63</file>
+        </group>
     </open-files>
 </project-private>

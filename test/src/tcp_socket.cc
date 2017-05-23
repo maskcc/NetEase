@@ -28,7 +28,7 @@ using namespace easynet;
             char *buff = svr_.get()->buff_;
             //一直读, 直到出错           
             int32_t ret = NetPackage::Read(peer_.fd_, buff, MAX_SOCK_BUFF); 
-            LOG(INFO) << "read ok ret[" << ret << "]";
+            //LOG(INFO) << "read ok ret[" << ret << "]";
                
                                                                                  
             if(0 == ret ){     
@@ -76,14 +76,14 @@ using namespace easynet;
                     
                     if(VERSION != msg_->header.version_){
                         LOG(ERROR) << "version is not fit! kick out client fd[" << peer_.fd_ << "] version[" 
-                                  << msg_->header.version_ << "] current version[" << VERSION<<"]";
+                                  << (int)msg_->header.version_ << "] current version[" << (int)VERSION<<"]";
                         this->KickOut();
                         LOG(INFO) << "receive msg count[" << m.GetRecvPack() << "]";
                         return;
                     }
 
                     //为body 申请内存
-                    data_buffer->Resize(msg_->header.size_ + HEADER_SZ);  
+                    data_buffer->Resize(msg_->header.length_ + HEADER_SZ);  
                     //重新申请内存后, 以前的msg_指向的内容不能再使用了
                     msg_ = (MSG* )data_buffer->GetBuffPtr();
                     need_data = data_buffer->NeedData();                
@@ -112,7 +112,7 @@ using namespace easynet;
                     
                     auto f = socket_handler_;
                     try{
-                        f(this->getID(), pMsg,msg_->header.size_);
+                        f(this->getID(), pMsg,msg_->header.length_, msg_->header.type_);
                     }catch(...){
                         LOG(ERROR) << "tcpsocket handler run fail!";                        
                     }                    
