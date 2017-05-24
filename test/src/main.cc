@@ -16,6 +16,7 @@
 #include "book.pb.h"
 #include "safe_queue.h"
 #include "ddz_server.h"
+#include "game_frame.h"
 //#include "ConfigLoader.h"
 using namespace std;
 using namespace easynet;
