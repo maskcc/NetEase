@@ -21,6 +21,7 @@
 #include "config_loader.h"
 #include "game_player.h"
 #include "game_message.h"
+#include "log.h"
 using namespace easynet;
 //游戏框架
 
@@ -59,8 +60,8 @@ public:
     
     
     //注册事件, 客户端消息到来时处理
-    bool reg_event(GameMessagePtr ptr);
-    void proc_message(int32_t type, const void* data, int32_t sz);
+    bool reg_event(GameMessagePtr ptr);    
+    void proc_message(GamePlayerPtr player, int32_t type, const void* data, int32_t sz);
 private:
     
 private:

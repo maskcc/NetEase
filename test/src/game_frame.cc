@@ -5,9 +5,6 @@
  */
 
 
-
-#include <bits/stl_map.h>
-
 #include "game_frame.h"
 
 GameFrame::GameFrame() {
@@ -33,13 +30,18 @@ bool GameFrame::init(uint16_t port, int32_t max_connection, On_Accept_Handler h1
         pl->on_reconnect();
     };
     auto on_data = [this](uint64_t id, const void* data, int32_t sz, int32_t type) {
-
-
-
-
+        auto player = this->find_player(id);
+        if( nullptr == player ){
+            return;
+        }
+        
+        this->proc_message(player, type, data, sz);
     };
-
+    GameMessagePtr login_req = make_shared<LoginReq>();
+    this->reg_event(login_req);
     svr->Init(port, max_connection, on_accept, on_data, timeout, window, nodelay);
+    svr->Start();
+    
 }
 
 
@@ -77,7 +79,7 @@ bool GameFrame::reg_event(GameMessagePtr ptr) {
     auto mm = message_map_.find(msg->type());
     if (mm != message_map_.end()) {
         //LOG WARN 有消息重复
-        message_map_.erase(mm, std::next(mm));
+        message_map_.erase(mm);
     }
     //注册消息成功
     message_map_.insert(make_pair(msg->type(), ptr));
@@ -85,6 +87,13 @@ bool GameFrame::reg_event(GameMessagePtr ptr) {
     return true;
 }
 
-void GameFrame::proc_message(int32_t type, const void* data, int32_t sz) {
-
+void GameFrame::proc_message(GamePlayerPtr player, int32_t type, const void* data, int32_t sz) {
+    auto procptr = message_map_.find(type);
+    if (procptr == message_map_.end()) {
+        //LOG ERROR unkonw msg type
+        return;
+    }
+    auto  proc = procptr->second.get();
+    proc->proc(data, sz);
+    
 }

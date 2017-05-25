@@ -29,7 +29,7 @@ public:
     //消息解密
     virtual void decode() = 0;
     //处理消息
-    virtual void proc() = 0;
+    virtual void proc(const void* data, int32_t sz) = 0;
 public:
     int32_t type_;
     
@@ -40,8 +40,14 @@ class LoginReq : public GameMessage{
         LoginReq(){
             type_ = 0x0001;
         }
-        void proc() override
+        void proc(const void* data, int32_t sz) override
         {
+            
+        }
+        void encode(){
+            
+        }
+        void decode(){
             
         }
     //定义数据结构
@@ -56,7 +62,13 @@ class LoginReq : public GameMessage{
         LoginRsp(){
             type_ = 0x0002;
         }
-        void proc() override
+        void encode(){
+            
+        }
+        void decode(){
+            
+        }
+        void proc(const void* data, int32_t sz) override
         {
             
         }
