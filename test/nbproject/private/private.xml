@@ -17,7 +17,13 @@
         <group>
             <file>rfs://svr@192.168.0.128:22/home/svr/projects/NetEase/NetEase/test/include/ddz%5F%73%65%72%76%65%72%2E%68</file>
             <file>rfs://svr@192.168.0.128:22/home/svr/projects/NetEase/NetEase/test/src/main.cc</file>
+            <file>rfs://svr@192.168.0.128:22/home/svr/projects/NetEase/NetEase/test/include/game%5F%6D%65%73%73%61%67%65%2E%68</file>
+            <file>rfs://svr@192.168.0.128:22/home/svr/projects/NetEase/NetEase/test/src/game%5F%70%6C%61%79%65%72%2E%63%63</file>
+            <file>rfs://svr@192.168.0.128:22/home/svr/projects/NetEase/NetEase/test/src/game%5F%6D%65%73%73%61%67%65%2E%63%63</file>
+            <file>rfs://svr@192.168.0.128:22/home/svr/projects/NetEase/NetEase/test/src/game%5F%66%72%61%6D%65%2E%63%63</file>
             <file>rfs://svr@192.168.0.128:22/home/svr/projects/NetEase/NetEase/test/src/ddz%5F%73%65%72%76%65%72%2E%63%63</file>
+            <file>rfs://svr@192.168.0.128:22/home/svr/projects/NetEase/NetEase/test/include/game%5F%70%6C%61%79%65%72%2E%68</file>
+            <file>rfs://svr@192.168.0.128:22/home/svr/projects/NetEase/NetEase/test/include/game%5F%66%72%61%6D%65%2E%68</file>
         </group>
     </open-files>
 </project-private>

@@ -16,14 +16,20 @@
 
 #include <map>
 #include <memory>
+#include <iterator> 
 #include "epoll_svr.h"
 #include "config_loader.h"
 #include "game_player.h"
+#include "game_message.h"
 using namespace easynet;
 //游戏框架
 
 using PLAYER_MAP = std::map<uint64_t, GamePlayerPtr>;
 using PLAYER_MAP_ITER = std::map<uint64_t, GamePlayerPtr>::iterator;
+using MESSAGE_MAP = std::map<int32_t, GameMessagePtr>;
+using MESSAGE_MAP_ITER = std::map<int32_t, GameMessagePtr>::iterator;
+
+
 class GameFrame{
 public:
     
@@ -39,8 +45,7 @@ public:
     bool init(uint16_t port, int32_t max_connection, On_Accept_Handler h1, On_Socket_Handler h2,
               int32_t timeout = 30,int32_t window = 2048,  bool nodelay = true);  
     
-    //注册事件, 客户端消息到来时处理
-    bool reg_event();
+    
     //连接服务器
     bool connect_to();
     //发送消息
@@ -51,12 +56,19 @@ public:
     //应该另外建一个类管理玩家
     GamePlayerPtr find_player(uint64_t id);
     void add_player(uint64_t id, GamePlayerPtr player);
+    
+    
+    //注册事件, 客户端消息到来时处理
+    bool reg_event(GameMessagePtr ptr);
+    void proc_message(int32_t type, const void* data, int32_t sz);
 private:
     
 private:
     EPOLLSvrPtr epoll_svr_;    
     //所有玩家
     PLAYER_MAP  player_map_;
+    //消息处理接口
+    MESSAGE_MAP message_map_;
     
     
     

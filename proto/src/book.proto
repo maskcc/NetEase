@@ -19,16 +19,4 @@ message AddrBook {
 	repeated Person people = 1;
 }
 
-message LoginReq {
-	string name = 1;
-	string passwd = 2;
-	int32  platform = 3;
-}
-
-message LoginRsp {
-	int32 err = 1;
-	int32 id = 2;
-	int32 gender = 3;
-	string sign = 4;
-}
 

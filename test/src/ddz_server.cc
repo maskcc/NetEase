@@ -8,6 +8,7 @@
 
 using namespace easynet;
 void DDZServer::start(){
+    /*
     auto on_data = [](uint64_t id, const void* data, int32_t sz, int32_t type){
         LOG(INFO) << "on_data id[" << id << "] type[" << type <<"] sz[" << sz << "]";
         
@@ -36,7 +37,7 @@ void DDZServer::start(){
     server->Start();    
     
    
-    
+    */
     
 }
 

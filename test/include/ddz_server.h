@@ -14,7 +14,7 @@
 #ifndef DDZ_SERVER_H
 #define DDZ_SERVER_H
 
-#include <msgpack.hpp>
+
 #include <string>
 #include <iostream>
 #include <sstream>
@@ -22,21 +22,6 @@
 #include "epoll_svr.h"
 #include "config_loader.h"
 
-namespace DDZ_NET_MSG{    
-    
-    class LoginReq{
-    public:
-        string name_;
-        string passwd_;
-        int32_t plat_;
-        MSGPACK_DEFINE(name_, passwd_, plat_);
-    };
-    //using LoginReq = msgpack::type::tuple<string, string, int32_t>;
-    using LoginRsp = msgpack::type::tuple<int32_t, int32_t, int32_t, string>;
-    
-    
-    
-}
 
 
 

@@ -13,13 +13,61 @@
 
 #ifndef GAME_MESSAGE_H
 #define GAME_MESSAGE_H
-
-//消息处理定义
+#include <stdint.h>
+#include <string>
+#include <memory>
+#include <msgpack.hpp>
 class GameMessage{
 public:
-    
+    //获取消息类型
+    int32_t type(){
+        return type_;
+    }
+    //子类必须实现的消息处理
+    //消息加密
+    virtual void encode() = 0;
+    //消息解密
+    virtual void decode() = 0;
+    //处理消息
+    virtual void proc() = 0;
+public:
+    int32_t type_;
     
 };
+using GameMessagePtr = std::shared_ptr<GameMessage>;
+class LoginReq : public GameMessage{
+    public:
+        LoginReq(){
+            type_ = 0x0001;
+        }
+        void proc() override
+        {
+            
+        }
+    //定义数据结构
+    public:
+        std::string name_;
+        std::string passwd_;
+        int32_t plat_;
+        MSGPACK_DEFINE(name_, passwd_, plat_);
+    };
+    class LoginRsp: public GameMessage{
+    public:        
+        LoginRsp(){
+            type_ = 0x0002;
+        }
+        void proc() override
+        {
+            
+        }
+        int32_t err_;
+        int32_t id_;
+        int32_t gender_;
+        std::string sign_;
+        MSGPACK_DEFINE(err_, id_, gender_, sign_);
+        
+    };
+    
 
 
 

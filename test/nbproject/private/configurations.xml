@@ -9,6 +9,7 @@
         <in>data_buffer.h</in>
         <in>ddz_server.h</in>
         <in>epoll_svr.h</in>
+        <in>game_frame.h</in>
         <in>game_message.h</in>
         <in>game_player.h</in>
         <in>iplayer.h</in>

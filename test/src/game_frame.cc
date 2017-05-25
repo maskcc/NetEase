@@ -6,6 +6,8 @@
 
 
 
+#include <bits/stl_map.h>
+
 #include "game_frame.h"
 
 GameFrame::GameFrame() {
@@ -31,18 +33,16 @@ bool GameFrame::init(uint16_t port, int32_t max_connection, On_Accept_Handler h1
         pl->on_reconnect();
     };
     auto on_data = [this](uint64_t id, const void* data, int32_t sz, int32_t type) {
-        
-        
-        
-        
+
+
+
+
     };
 
     svr->Init(port, max_connection, on_accept, on_data, timeout, window, nodelay);
 }
 
-bool GameFrame::reg_event() {
-    return true;
-}
+
 //连接服务器
 
 bool GameFrame::connect_to() {
@@ -72,3 +72,19 @@ void GameFrame::add_player(uint64_t id, GamePlayerPtr player) {
     player_map_.insert(make_pair(id, player));
 }
 
+bool GameFrame::reg_event(GameMessagePtr ptr) {
+    auto msg = ptr.get();
+    auto mm = message_map_.find(msg->type());
+    if (mm != message_map_.end()) {
+        //LOG WARN 有消息重复
+        message_map_.erase(mm, std::next(mm));
+    }
+    //注册消息成功
+    message_map_.insert(make_pair(msg->type(), ptr));
+    
+    return true;
+}
+
+void GameFrame::proc_message(int32_t type, const void* data, int32_t sz) {
+
+}
