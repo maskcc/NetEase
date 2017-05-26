@@ -33,7 +33,7 @@ namespace easynet{
             bool Init(uint16_t port, int32_t max_connection, On_Accept_Handler h1, On_Socket_Handler h2,
                       int32_t timeout = 30,int32_t window = 2048,  bool nodelay = true);  
             bool Start();
-            bool SendMessage(IPlayerPtr player, const void *msg, int32_t sz);
+            bool SendMessage(uint64_t id, const void *msg, int32_t sz, int32_t type);
             TCPConnectorPtr Connect(std::string dest, int32_t port, bool reconnect); //是否重连
             int32_t Wait();
             int32_t Svc(int32_t c);

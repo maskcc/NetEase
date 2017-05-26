@@ -93,18 +93,27 @@ MONITOR MONITOR_SVR;
 
     }
 
-    bool EPOLLSvr::SendMessage(IPlayerPtr player, const void* msg, int32_t sz) {
+    bool EPOLLSvr::SendMessage(uint64_t id, const void* msg, int32_t sz, int32_t type) {
         //TODO 添加发送缓冲区, 异步发送
         //先阻塞发送
+        auto pl = player_map_.find(id);
+        if( pl == player_map_.end() ){
+            LOG(ERROR)<< "send msg fail, can not find player " << id << " msy type:" << type;
+            return false;
+        }
+        auto player = pl->second;
+        
         char *pPos = buff_;
         MSG *pMsg = (MSG* )buff_;
         pMsg->header.version_ = VERSION;
+        pMsg->header.type_ = type;
         pMsg->header.length_ = sz;
         pMsg->header.state_ = 0;
         pMsg->header.reserve_ = 0;
+        
         memcpy(pPos + sizeof(HEADER), msg, sz);
         int32_t sendcnt = 0;        
-        int32_t leftcnt = sz;        
+        int32_t leftcnt = sz + sizeof(HEADER);        
         while(leftcnt > 0){
             sendcnt = NetPackage::Write(player.get()->peer_.fd_, pPos, leftcnt);
             if(sendcnt < 0){
@@ -117,6 +126,8 @@ MONITOR MONITOR_SVR;
             leftcnt -= sendcnt;   
             pPos += sendcnt;
         }
+        
+        LOG(INFO)<< "send msg success node:" << id << " msg type:" << type << " size:" << sz;
         return true;
     }
     TCPConnectorPtr EPOLLSvr::Connect(std::string dest, int32_t port, bool reconnect) {

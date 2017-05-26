@@ -351,8 +351,12 @@ int main(int argc, char* argv[])
     //testMap();
     //Test_Rapid_Json::load_server_config();
     //test_epoll();
-    DDZServer d;
-    d.test();
+    //DDZServer d;
+    //d.test();
+    
+    GameFramePtr f = std::make_shared<GameFrame>();
+    f.get()->init(30077, 1000);
+   
     
     //if( 2 != argc){
     //    LOG(ERROR) << "usage:";

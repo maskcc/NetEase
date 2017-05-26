@@ -22,12 +22,12 @@ public:
 public:
     int age;
     int code;
-    
+    uint64_t id_;
 private:
     //用户id
     uint64_t user_id_;
     //连接id
-    uint64_t id_;
+    
 };
 using GamePlayerPtr = std::shared_ptr<GamePlayer>;
 

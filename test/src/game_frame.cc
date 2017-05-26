@@ -11,17 +11,18 @@ GameFrame::GameFrame() {
     epoll_svr_ = std::make_shared<EPOLLSvr>();
 }
 
-bool GameFrame::init(uint16_t port, int32_t max_connection, On_Accept_Handler h1, On_Socket_Handler h2,
-        int32_t timeout, int32_t window, bool nodelay) {
+bool GameFrame::init(uint16_t port, int32_t max_connection, int32_t timeout, int32_t window, bool nodelay) {
 
     auto svr = epoll_svr_.get();
 
     auto on_accept = [this](uint64_t id) {
         //加入玩家应该在登录消息中处理
+        LOG(INFO) << "client connection come, id:" << id;
         auto pl = this->find_player(id);
         if (nullptr == pl) {
             //没找到玩家
             pl = std::make_shared<GamePlayer>();
+            pl.get()->id_ = id;
             this->add_player(id, pl);
             return;
         }
@@ -38,6 +39,7 @@ bool GameFrame::init(uint16_t port, int32_t max_connection, On_Accept_Handler h1
         this->proc_message(player, type, data, sz);
     };
     GameMessagePtr login_req = make_shared<LoginReq>();
+    login_req.get()->set_frame(shared_from_this());
     this->reg_event(login_req);
     svr->Init(port, max_connection, on_accept, on_data, timeout, window, nodelay);
     svr->Start();
@@ -52,8 +54,10 @@ bool GameFrame::connect_to() {
 }
 //发送消息
 
-bool GameFrame::send_msg() {
-    return true;
+bool GameFrame::send_msg(uint64_t id, GameMessagePtr msg) {
+    auto svr = epoll_svr_.get();
+    std:;string data = msg.get()->encode();
+    return svr->SendMessage(id, data.c_str(), data.size(), msg.get()->type());
 }
 //定时器
 
@@ -94,6 +98,7 @@ void GameFrame::proc_message(GamePlayerPtr player, int32_t type, const void* dat
         return;
     }
     auto  proc = procptr->second.get();
-    proc->proc(data, sz);
+    proc->decode(data, sz);
+    proc->proc(player);
     
 }
