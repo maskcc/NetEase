@@ -1,0 +1,4 @@
+mkdir -p ./obj/main.run;g++ -I./include  -I../common/include -std=c++11 -g -DDEBUG -D_REENTRANT -c src/epoll_svr.cc -o obj/main.run/epoll_svr.o
+mkdir -p ./obj/main.run;g++ -I./include  -I../common/include -std=c++11 -g -DDEBUG -D_REENTRANT -c src/main.cc -o obj/main.run/main.o
+g++ -I./include  -I../common/include -std=c++11 -g -DDEBUG -D_REENTRANT -o ./bin/main.run obj/main.run/epoll_svr.o obj/main.run/main.o  -lpthread -lrt -lnsl -lgcc_s  -lglog 
+chmod 755 ./bin/main.run
