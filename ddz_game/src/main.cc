@@ -12,14 +12,11 @@
 #include "rapidjson/filereadstream.h"
 
 #include "log.h"
-#include "epoll_svr.h"
 #include "book.pb.h"
-#include "safe_queue.h"
 #include "ddz_server.h"
 
-
 using namespace std;
-using namespace easynet;
+
 //TODO:  还没做完
 //FIXME: 你说呢
 //XXX: WHAT?

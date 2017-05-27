@@ -109,11 +109,13 @@ MONITOR MONITOR_SVR;
         char *pPos = buff_;
         MSG *pMsg = (MSG* )buff_;
         pMsg->header.version_ = VERSION;
-        pMsg->header.type_ = type;
-        pMsg->header.length_ = sz;
-        pMsg->header.state_ = 0;
+        pMsg->header.type_ = htons(type);
+        pMsg->header.length_ = htons(sz);
+        pMsg->header.encode_ = ENCODE_NONE;
+        pMsg->header.identify_ = IDENTIFY;
         pMsg->header.reserve_ = 0;
         
+
         memcpy(pPos + sizeof(HEADER), msg, sz);
         int32_t sendcnt = 0;        
         int32_t leftcnt = sz + sizeof(HEADER);        

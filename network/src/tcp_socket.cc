@@ -74,13 +74,17 @@ using namespace easynet;
                     more_data = (more_data - need_data) < 0 ? 0:(more_data - need_data);
                     msg_ = (MSG* )data_buffer->GetBuffPtr();
                     
-                    if(VERSION != msg_->header.version_){
-                        LOG(ERROR) << "version is not fit! kick out client fd[" << peer_.fd_ << "] version[" 
-                                  << (int)msg_->header.version_ << "] current version[" << (int)VERSION<<"]";
+                    
+                    if(VERSION != msg_->header.version_ || IDENTIFY != msg_->header.identify_){
+                        LOG(ERROR) << "version or identify is not fit! kick out client fd[" << peer_.fd_ << "] version[" 
+                                  << (int)msg_->header.version_ << "] current version[" << (int)VERSION<<"]" << "identify[" 
+                                << (int)msg_->header.identify_ << "] current identify[" << (int)IDENTIFY << "]";
                         this->KickOut();
                         LOG(INFO) << "receive msg count[" << m.GetRecvPack() << "]";
                         return;
                     }
+                    msg_->header.length_ = ntohs(msg_->header.length_);
+                    msg_->header.type_ = ntohs(msg_->header.type_);
 
                     //为body 申请内存
                     data_buffer->Resize(msg_->header.length_ + HEADER_SZ);  

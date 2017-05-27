@@ -5,24 +5,43 @@
       <df name="bin">
       </df>
       <df name="include">
-        <in>ddz_server.h</in>
-        <in>game_frame.h</in>
-        <in>game_message.h</in>
-        <in>game_player.h</in>
-        <in>login_req.h</in>
+        <in>config_loader.h</in>
+        <in>data_buffer.h</in>
+        <in>epoll_svr.h</in>
+        <in>iplayer.h</in>
+        <in>monitor.h</in>
+        <in>net_package.h</in>
+        <in>safe_queue.h</in>
+        <in>socket.h</in>
+        <in>svr_define.h</in>
+        <in>tcp_accept.h</in>
+        <in>tcp_connector.h</in>
+        <in>tcp_event.h</in>
+        <in>tcp_socket.h</in>
+        <in>timer.h</in>
+        <in>udp_socket.h</in>
       </df>
       <df name="obj">
         <df name="main.run">
         </df>
+        <df name="network">
+        </df>
+        <df name="network.so">
+        </df>
       </df>
       <df name="src">
-        <in>ddz_server.cc</in>
-        <in>game_frame.cc</in>
-        <in>game_message.cc</in>
-        <in>game_player.cc</in>
-        <in>login_req.cc</in>
-        <in>main.cc</in>
-        <in>old_test.cc</in>
+        <in>config_loader.cc</in>
+        <in>data_buffer.cc</in>
+        <in>epoll_svr.cc</in>
+        <in>iplayer.cc</in>
+        <in>net_package.cc</in>
+        <in>safe_queue.cc</in>
+        <in>socket.cc</in>
+        <in>tcp_accept.cc</in>
+        <in>tcp_connector.cc</in>
+        <in>tcp_evnet.cc</in>
+        <in>tcp_socket.cc</in>
+        <in>timer.cc</in>
       </df>
     </df>
   </logicalFolder>

@@ -25,6 +25,7 @@
 using namespace std;
 using namespace easynet;
 
+/*
 void test()
 {
     LOG(INFO) << "we are all bugs" << endl;
@@ -380,3 +381,4 @@ void old_test_main(){
     
     
 }
+*/

@@ -6,7 +6,7 @@
 
 #include "ddz_server.h"
 
-using namespace easynet;
+
 bool DDZServer::timer(){
     LOG(INFO) << "on timer!";
     

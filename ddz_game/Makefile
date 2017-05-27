@@ -9,8 +9,8 @@ TARGETINCS = -I./include  -I../common/include -I../proto/protocols -I../../third
 TARGETLIBS = ../proto/bin/protocols.a  ../lib/network.a
 
 CPP = g++
-DEBUG = -g -DDEBUG -D_REENTRANT
-RELEASE = -g -O2
+DEBUG = -g -DDEBUG -D_REENTRANT -m64
+RELEASE = -g -O3
 CPPFLAGS  = $(TARGETINCS) -std=c++11
 LINKFLAGS = $(TARGETLIBS) -lpthread -lrt -lnsl -lgcc_s  -lglog  -lprotobuf
 TARGETSRCS = $(wildcard $(SRCPATH)/*.c $(SRCPATH)/*.cc)

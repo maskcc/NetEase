@@ -37,7 +37,7 @@ public:
     MSGPACK_DEFINE(err_, id_, gender_, sign_);
 
 };
-
+using LoginRspPtr = std::shared_ptr<LoginRsp>;
 class LoginReq : public GameMessage {
 
     MSGPACK_DECODE_DEF
@@ -45,6 +45,7 @@ class LoginReq : public GameMessage {
 public:
     LoginReq() {
         type_ = 0x0001;
+        static_rsp_ = make_shared<LoginRsp>();
     }
     void proc(GamePlayerPtr player) override;
 
@@ -53,7 +54,9 @@ public:
     std::string name_;
     std::string passwd_;
     int32_t plat_;
-
+    
+    //返回消息每个接收类都保存一个, 每次处理不用再申请内存
+    LoginRspPtr static_rsp_;
     //注册消息
     MSGPACK_DEFINE(name_, passwd_, plat_);
 

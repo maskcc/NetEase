@@ -46,15 +46,17 @@
 const int32_t MAX_EVENTS = 128;
 const int32_t MAX_SOCK_BUFF = 1024 * 64; //网络上最大的包大小为 64K
 
-const uint8_t VERSION = 0x99;
+const uint8_t IDENTIFY = 0x05;
+const uint8_t VERSION = 0x03;
+const uint8_t ENCODE_NONE = 0x00;
+const uint8_t ENCODE_AES = 0x01;
 using HEADER = struct tagHEADER {
-    uint8_t   version_;   //版本号
-    uint8_t   encode_;    
-    uint8_t   reserve_;   //是否反序
-    uint8_t   state_;     //TODO 序列, 类似tcp 序列字段, 序号不对断开连接?
-    int16_t  length_;    //包体大小, 最大 65535     
+    uint8_t  identify_;
+    uint8_t  encode_;    
+    int16_t  length_;    //包体大小, 最大 65535    
+    uint8_t  version_;   //版本号    
+    uint8_t  reserve_;   //是否反序
     int16_t  type_;
-    
     
 };
 //包头大小
