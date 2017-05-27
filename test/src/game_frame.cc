@@ -6,6 +6,7 @@
 
 
 #include "game_frame.h"
+#include "ddz_server.h"
 
 GameFrame::GameFrame() {
     epoll_svr_ = std::make_shared<EPOLLSvr>();
@@ -38,19 +39,22 @@ bool GameFrame::init(uint16_t port, int32_t max_connection, int32_t timeout, int
         
         this->proc_message(player, type, data, sz);
     };
-    GameMessagePtr login_req = make_shared<LoginReq>();
-    login_req.get()->set_frame(shared_from_this());
-    this->reg_event(login_req);
-    svr->Init(port, max_connection, on_accept, on_data, timeout, window, nodelay);
+    auto on_timeout = [this](){
+      this->timer();
+    };
+    this->reg_event();
+    svr->Init(port, max_connection, on_accept, on_data, on_timeout, timeout, window, nodelay);
     svr->Start();
     
 }
 
 
 //连接服务器
-
-bool GameFrame::connect_to() {
-    return true;
+//TODO, 应该返回的是一个GamePlayer, 还需要修改
+TCPConnectorPtr GameFrame::connect_to(std::string dest, int32_t port, bool reconnect ) {
+    TCPConnectorPtr conn =  epoll_svr_.get()->Connect(dest, port, reconnect); //是否重连
+    
+    return conn;
 }
 //发送消息
 
@@ -61,9 +65,7 @@ bool GameFrame::send_msg(uint64_t id, GameMessagePtr msg) {
 }
 //定时器
 
-bool GameFrame::timer() {
-    return true;
-}
+
 
 GamePlayerPtr GameFrame::find_player(uint64_t id) {
     auto pl = player_map_.find(id);
@@ -77,6 +79,7 @@ GamePlayerPtr GameFrame::find_player(uint64_t id) {
 void GameFrame::add_player(uint64_t id, GamePlayerPtr player) {
     player_map_.insert(make_pair(id, player));
 }
+
 
 bool GameFrame::reg_event(GameMessagePtr ptr) {
     auto msg = ptr.get();

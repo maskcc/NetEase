@@ -76,54 +76,6 @@ protected:
 
 using GameMessagePtr = std::shared_ptr<GameMessage>;
 
-  class LoginRsp: public GameMessage{
-    public:        
-        MSGPACK_DECODE_DEF
-        MSGPACK_ENCODE_DEF
-        LoginRsp(){
-            type_ = 0x0002;
-        }
-      
-     
-        void proc(GamePlayerPtr player) override
-        {
-            
-        }
-        public:
-        int32_t err_;
-        int32_t id_;
-        int32_t gender_;
-        std::string sign_;
-        
-        MSGPACK_DEFINE(err_, id_, gender_, sign_);
-        
-    };
-    
-
-    
-class LoginReq : public GameMessage{    
-    MSGPACK_DECODE_DEF
-    MSGPACK_ENCODE_DEF
-    public:
-        LoginReq(){
-            type_ = 0x0001;
-        }
-        void proc(GamePlayerPtr player) override;
-       
-    //定义数据结构
-    public:
-        std::string name_;
-        std::string passwd_;
-        int32_t plat_;
-        
-        //注册消息
-        MSGPACK_DEFINE(name_, passwd_, plat_);
-        
-    };
-  
-
-    
-    
 
 #endif /* GAME_MESSAGE_H */
 

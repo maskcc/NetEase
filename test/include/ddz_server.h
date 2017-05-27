@@ -18,27 +18,18 @@
 #include <string>
 #include <iostream>
 #include <sstream>
+#include <memory>
 #include "log.h"
-#include "epoll_svr.h"
-#include "config_loader.h"
+#include "game_frame.h"
+#include "login_req.h"
 
-
-
-
-class DDZServer{
+class DDZServer : public GameFrame{
 public:
+    bool timer() override;
+    void reg_event() override;
     void start();
-    void test();
-    
     
 private:
-    
-    
-    
-    
-    
-    
-    
     
 };
 

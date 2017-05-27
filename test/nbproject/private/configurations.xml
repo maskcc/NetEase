@@ -13,6 +13,7 @@
         <in>game_message.h</in>
         <in>game_player.h</in>
         <in>iplayer.h</in>
+        <in>login_req.h</in>
         <in>monitor.h</in>
         <in>net_package.h</in>
         <in>safe_queue.h</in>
@@ -38,8 +39,10 @@
         <in>game_message.cc</in>
         <in>game_player.cc</in>
         <in>iplayer.cc</in>
+        <in>login_req.cc</in>
         <in>main.cc</in>
         <in>net_package.cc</in>
+        <in>old_test.cc</in>
         <in>safe_queue.cc</in>
         <in>socket.cc</in>
         <in>tcp_accept.cc</in>

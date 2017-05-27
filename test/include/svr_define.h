@@ -69,6 +69,7 @@ using MSG = struct tagMSG {
 using On_Accept_Handler = std::function<void(uint64_t)>;
 using On_Socket_Handler = std::function<void(uint64_t, const void*, int32_t, int32_t)>;
 using On_Reconnect_Handler = std::function<void()>;
+using On_Timer_Handler = std::function<void()>;
 
 
 //定时器

@@ -55,20 +55,24 @@ public:
     
     
     //连接服务器
-    bool connect_to();
+    TCPConnectorPtr connect_to(std::string dest, int32_t port, bool reconnect = true);
     //发送消息
     bool send_msg(uint64_t id, GameMessagePtr msg);
     //定时器
-    bool timer();
+    
     
     //应该另外建一个类管理玩家
     GamePlayerPtr find_player(uint64_t id);
     void add_player(uint64_t id, GamePlayerPtr player);
-    
-    
     //注册事件, 客户端消息到来时处理
     bool reg_event(GameMessagePtr ptr);    
     void proc_message(GamePlayerPtr player, int32_t type, const void* data, int32_t sz);
+    
+    //注册事件的接口
+    virtual void reg_event() = 0;
+    //定时器接口
+    virtual bool timer() = 0;
+    virtual void start() = 0;
 private:
     
 private:

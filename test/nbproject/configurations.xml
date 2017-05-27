@@ -5,6 +5,7 @@
       <df name="include">
         <in>game_message.h</in>
         <in>game_player.h</in>
+        <in>login_req.h</in>
       </df>
       <df name="src">
         <in>config_loader.cc</in>
@@ -15,8 +16,10 @@
         <in>game_message.cc</in>
         <in>game_player.cc</in>
         <in>iplayer.cc</in>
+        <in>login_req.cc</in>
         <in>main.cc</in>
         <in>net_package.cc</in>
+        <in>old_test.cc</in>
         <in>safe_queue.cc</in>
         <in>socket.cc</in>
         <in>tcp_accept.cc</in>
@@ -82,6 +85,8 @@
       </item>
       <item path="include/game_player.h" ex="false" tool="3" flavor2="0">
       </item>
+      <item path="include/login_req.h" ex="false" tool="3" flavor2="0">
+      </item>
       <item path="src/config_loader.cc" ex="false" tool="1" flavor2="0">
       </item>
       <item path="src/data_buffer.cc" ex="false" tool="1" flavor2="8">
@@ -106,6 +111,8 @@
         <ccTool flags="0">
         </ccTool>
       </item>
+      <item path="src/login_req.cc" ex="false" tool="1" flavor2="0">
+      </item>
       <item path="src/main.cc" ex="false" tool="1" flavor2="8">
         <ccTool flags="0">
         </ccTool>
@@ -113,6 +120,8 @@
       <item path="src/net_package.cc" ex="false" tool="1" flavor2="8">
         <ccTool flags="0">
         </ccTool>
+      </item>
+      <item path="src/old_test.cc" ex="false" tool="1" flavor2="0">
       </item>
       <item path="src/safe_queue.cc" ex="false" tool="1" flavor2="8">
         <ccTool flags="0">

@@ -7,65 +7,20 @@
 #include "ddz_server.h"
 
 using namespace easynet;
-void DDZServer::start(){
-    /*
-    auto on_data = [](uint64_t id, const void* data, int32_t sz, int32_t type){
-        LOG(INFO) << "on_data id[" << id << "] type[" << type <<"] sz[" << sz << "]";
-        
-        std::string msg((char*)data);
-        msgpack::object_handle oh = msgpack::unpack(msg.data(), msg.size());
+bool DDZServer::timer(){
+    LOG(INFO) << "on timer!";
     
-        msgpack::object deserialized = oh.get();
+    return true;
+}
 
-        std::cout << deserialized << std::endl;
-
-        //msgpack::type::tuple<string, string, int32_t> dst;
-        DDZ_NET_MSG::LoginReq req;
-        deserialized.convert(req);
-        LOG(INFO) << "name:" << req.name_ << " passwd:" << req.passwd_ << " platform:" << req.plat_;
-        
-    };
-    auto on_accept = [](uint64_t id)  {
-        LOG(INFO) << "on_accept id[" << id << "] ";  
-    };
-     
-    ConfigLoader::ServerInfo *info = ConfigLoader::load_server_config();
-        
-    EPOLLSvrPtr svr = std::make_shared<EPOLLSvr>();     
-    auto server = svr.get();
-    server->Init(info->config_.port_, 3000, on_accept, on_data);     
-    server->Start();    
-    
-   
-    */
+void DDZServer::reg_event(){
+    GameMessagePtr login_req = std::make_shared<LoginReq>();
+    login_req.get()->set_frame(shared_from_this());
+    GameFrame::reg_event(login_req);
     
 }
 
-void DDZServer::test(){
-    start();
-    /*
-    msgpack::type::tuple<string, string, int32_t> data("good", "job", 3);
+void DDZServer::start(){
     
-    using msg = msgpack::type::tuple<string, string, int32_t>;
-    msg data2("ok", "right", 3);
-    std::stringstream buffer;
-    msgpack::pack(buffer, data2);
-    
-    buffer.seekg(0);
-    
-    std::string str( buffer.str() );
-    msgpack::object_handle oh = msgpack::unpack(str.data(), str.size());
-    
-    msgpack::object deserialized = oh.get();
-    
-    std::cout << deserialized << std::endl;
-    
-    msgpack::type::tuple<string, string, int32_t> dst;
-    deserialized.convert(dst);
-    */
-    
-    
-    
-    
-    
+        this->init(30077, 1000, 1000);
 }

@@ -18,7 +18,9 @@ MONITOR MONITOR_SVR;
         close(epoll_fd_);
     }
 
-    bool EPOLLSvr::Init(uint16_t port, int32_t max_connection,  On_Accept_Handler h1, On_Socket_Handler h2, int32_t timeout, int32_t window, bool nodelay) {
+    bool EPOLLSvr::Init(uint16_t port, int32_t max_connection,  On_Accept_Handler h1,
+                        On_Socket_Handler h2, On_Timer_Handler h3,
+                        int32_t timeout, int32_t window, bool nodelay) {
         epoll_fd_ = epoll_create(max_connection);
         if(NetPackage::kINVALID_FD == epoll_fd_){
             LOG(FATAL) << "epoll create fail";
@@ -32,6 +34,7 @@ MONITOR MONITOR_SVR;
         acceptor.get()->SetHandler(h1);
         acceptor.get()->Listen();
         sock_handler_ = h2;
+        timer_handler_ = h3;
         
         // 疑问:可不可以先注册事件再listen, epoll 不不会出错?
         return RegEvent(EPOLL_CTL_ADD, EPOLLIN,  acceptor);
@@ -162,9 +165,10 @@ MONITOR MONITOR_SVR;
     int32_t EPOLLSvr::Wait() {
         //TODO add timer here
         
-        int32_t ret = epoll_wait(epoll_fd_, events_, MAX_EVENTS, -1);
+        int32_t ret = epoll_wait(epoll_fd_, events_, MAX_EVENTS, time_out_);
         if( 0 == ret ){
             //time out
+            timer_handler_();
             return 0;
         }
 
