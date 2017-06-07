@@ -35,3 +35,4 @@ LOG_*
 
 #Middle files
 proto/protocols/*
+/net/build/
