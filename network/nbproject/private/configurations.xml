@@ -5,6 +5,7 @@
       <df name="bin">
       </df>
       <df name="include">
+        <in>config.h</in>
         <in>config_loader.h</in>
         <in>data_buffer.h</in>
         <in>epoll_svr.h</in>

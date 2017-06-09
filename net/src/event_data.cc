@@ -11,6 +11,8 @@ EventData::EventData(){
     status_ = LINK_STATUS::LS_NONE;
     fd_ = NetPackage::kINVALID_FD;
     name_ = "";
+    acceptor_ = nullptr;
+    tcpsocket_ = nullptr;
     
 }
 

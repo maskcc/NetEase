@@ -30,7 +30,7 @@ namespace easynet{
             //端口号要注意是uint16_t 类型, 如果不是unsigned, 会有负数端口号
             static bool Listen(int32_t *fd, const std::string& listenIP, uint16_t port, bool reuse);
             static bool Accept6(int32_t listen_fd, int32_t *fd, std::string *ip, uint16_t *port);
-            static bool Accept(int32_t listen_fd, int32_t *fd, std::string *ip, uint16_t *port);
+            static bool Accept(int32_t listen_fd, int32_t& fd, std::string& ip, uint16_t& port);
             static bool Close(int32_t fd);
             static int32_t Read(int32_t fd, void *buf, int32_t sz);
             static int32_t Write(int32_t fd, const void *buf, int32_t sz);

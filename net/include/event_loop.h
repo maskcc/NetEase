@@ -15,8 +15,12 @@
 #define EVENT_LOOP_H
 #include "svr_define.h"
 #include "event_data.h"
+#include "epoll_event.h"
+#include "tcp_accept.h"
+#include "tcp_socket.h"
 
 namespace easynet{    
+ 
 class EventLoop{
 public:
     EventLoop();
@@ -24,16 +28,21 @@ public:
 public:
     // 初始化
     bool initialize();
-    bool run_once(int timeout);
-    
-protected:
-    
+    void run_once(int timeout);
+    void reg_event(const EventData& ev);  
+    int32_t get_efd() const{
+        return efd_;
+    }
+
+    //epoll 事件封装
+    EpollEvent  ev_control_;
     
     
 private:
     int32_t efd_;
     int32_t sock_pair_[2];
     EventData event_data_;
+    epoll_event events_[MAX_EVENTS];   //缓存epoll_wait 的事件
     
 };
 

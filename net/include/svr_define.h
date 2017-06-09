@@ -85,7 +85,7 @@ using _OnTimerHandler = std::function<void()>;
 
 //获取下一个id 
     static uint64_t next_id(){
-        static uint64_t id = 0;
+        static uint64_t id = 0xAD2017;
         ++id;
         return id;
     }
@@ -96,9 +96,20 @@ using _OnTimerHandler = std::function<void()>;
         READ_BODY
     };
     
+    class NetErrorCode{
+    public:
+        int32_t err_;
+    };
     const int32_t MAX_EFD = 1000;
     
-    
+    class TcpSocket;
+    using TcpSocketPtr = shared_ptr<TcpSocket>;    
+    class TcpAccept;
+    using TcpAcceptPtr = shared_ptr<TcpAccept>;
+    class EventLoop;
+    using EventLoopPtr = shared_ptr<EventLoop>;
+    using OnAcceptHandler = std::function<void(int32_t /*fd*/,  TcpSocketPtr /*acceptor*/, NetErrorCode&)>;
+    using OnReceiveHandler = std::function<void(int32_t /*fd*/,void*, int32_t sz,  NetErrorCode&)>;
    
     
     

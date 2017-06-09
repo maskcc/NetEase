@@ -14,20 +14,20 @@
 #ifndef EVENT_DATA_H
 #define EVENT_DATA_H
 #include "svr_define.h"
+
+
 namespace easynet{
      enum LINK_STATUS{
         LS_NONE,         //什么都没做
-        LS_CONNECTING,   //正在连接
+        LS_LISTING,        
         LS_ESTABLISHED,  //已经连接 
-        LS_RECONNECTING, //正在尝试重连
-        LS_CLOSING,      //正在关闭
+        LS_RECONNECTING, //正在尝试重连        
         LS_CLOSED        //已经关闭
     };
     
     enum LINK_TYPE{
         LT_NONE,
-        LT_LOCAL_SERVICE,    //服务器主动监听的端口 
-        LT_REMOTE_SERVICE,   //服务器主动连接的远程服务
+        LT_SERVICE,    //服务器主动监听的端口         
         LT_CLIENT            //连上来的客户端
         
     };
@@ -45,9 +45,11 @@ public:
     LINK_STATUS status_;       //连接状态    
     int32_t     fd_;           //连接fd
     std::string name_;          //连接名称, 监听的有名称, 连接的没有名称
-        
+    TcpAcceptPtr acceptor_;     //接收连接关联
+    TcpSocketPtr tcpsocket_;    //消息关联
 };
     
+using EventDataPtr = shared_ptr<EventData>;
     
     
 }

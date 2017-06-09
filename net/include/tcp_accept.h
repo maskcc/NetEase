@@ -13,13 +13,24 @@
 
 #ifndef TCPACCEPT_H
 #define TCPACCEPT_H
+#include "svr_define.h"
+#include "event_data.h"
 namespace easynet{
-class TcpAccept{
+class TcpAccept : public enable_shared_from_this<TcpAccept>{
 public:
+    TcpAccept(EventLoopPtr);
+    bool do_accept(int32_t port, OnAcceptHandler h);
+    void on_message(int32_t events);
+
+private:
+    EventLoopPtr event_loop_;
+    EventData    event_data_;
+    OnAcceptHandler on_accept_;
+    
     
 };
 
-using TcpAcceptPtr = shared_ptr<TcpAccept>;
+
 }
 
 

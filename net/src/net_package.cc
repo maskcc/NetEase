@@ -98,7 +98,7 @@ using namespace easynet;
     }
 
     //ipv4 的 accept
-    bool NetPackage::Accept(int32_t listen_fd, int32_t *fd, std::string *ip, uint16_t *port) {
+    bool NetPackage::Accept(int32_t listen_fd, int32_t& fd, std::string& ip, uint16_t& port) {
         char remote_ip[64] = {0};
         uint16_t acc_port = 0;
         int32_t acc_fd = kINVALID_FD;
@@ -113,9 +113,9 @@ using namespace easynet;
         }
         inet_ntop(AF_INET, &cltaddr.sin_addr,  remote_ip, 64);
         acc_port = ntohs(cltaddr.sin_port);
-        (*ip) = std::string(remote_ip);
-        (*port) = acc_port;
-        (*fd) = acc_fd;
+        ip = std::move(std::string(remote_ip));
+        port = acc_port;
+        fd = acc_fd;
         
         return true;
     }

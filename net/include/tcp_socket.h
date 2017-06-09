@@ -13,13 +13,33 @@
 
 #ifndef TCPSOCKET_H
 #define TCPSOCKET_H
+
+#include "event_loop.h"
+#include "event_data.h"
 namespace easynet{
-class TcpSocket{
+class TcpSocket  : public enable_shared_from_this<TcpSocket>{
 public:
+    TcpSocket(EventLoopPtr loop);
+    ~TcpSocket();
+    
+public:
+    void on_message(int32_t events){};
+    bool do_connect(){}
+    bool do_receive(OnReceiveHandler h);
+    void attach(uint64_t id, int32_t fd, std::string ip, int32_t port);
+    
+private:
+    std::string ip_;
+    int32_t port_;
+    uint64_t identify_;
+protected:
+    EventData event_data_;
+    EventLoopPtr event_loop_;
+    OnReceiveHandler on_receive_;
     
 };
 
-using TcpSocketPtr = shared_ptr<TcpSocket>;
+
 }
 
 #endif /* TCPSOCKET_H */

@@ -36,3 +36,5 @@ LOG_*
 #Middle files
 proto/protocols/*
 /net/build/
+/netease/build/
+/netease/dist/

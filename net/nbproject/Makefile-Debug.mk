@@ -36,10 +36,13 @@ OBJECTDIR=${CND_BUILDDIR}/${CND_CONF}/${CND_PLATFORM}
 # Object Files
 OBJECTFILES= \
 	${OBJECTDIR}/src/data_buffer.o \
+	${OBJECTDIR}/src/epoll_event.o \
 	${OBJECTDIR}/src/event_data.o \
 	${OBJECTDIR}/src/event_loop.o \
 	${OBJECTDIR}/src/net_package.o \
-	${OBJECTDIR}/src/safe_queue.o
+	${OBJECTDIR}/src/safe_queue.o \
+	${OBJECTDIR}/src/tcp_accept.o \
+	${OBJECTDIR}/src/tcp_socket.o
 
 
 # C Compiler Flags
@@ -73,6 +76,11 @@ ${OBJECTDIR}/src/data_buffer.o: src/data_buffer.cc
 	${RM} "$@.d"
 	$(COMPILE.cc) -g -Iinclude -I../common/include -MMD -MP -MF "$@.d" -o ${OBJECTDIR}/src/data_buffer.o src/data_buffer.cc
 
+${OBJECTDIR}/src/epoll_event.o: src/epoll_event.cc 
+	${MKDIR} -p ${OBJECTDIR}/src
+	${RM} "$@.d"
+	$(COMPILE.cc) -g -Iinclude -I../common/include -MMD -MP -MF "$@.d" -o ${OBJECTDIR}/src/epoll_event.o src/epoll_event.cc
+
 ${OBJECTDIR}/src/event_data.o: src/event_data.cc 
 	${MKDIR} -p ${OBJECTDIR}/src
 	${RM} "$@.d"
@@ -92,6 +100,16 @@ ${OBJECTDIR}/src/safe_queue.o: src/safe_queue.cc
 	${MKDIR} -p ${OBJECTDIR}/src
 	${RM} "$@.d"
 	$(COMPILE.cc) -g -Iinclude -I../common/include -MMD -MP -MF "$@.d" -o ${OBJECTDIR}/src/safe_queue.o src/safe_queue.cc
+
+${OBJECTDIR}/src/tcp_accept.o: src/tcp_accept.cc 
+	${MKDIR} -p ${OBJECTDIR}/src
+	${RM} "$@.d"
+	$(COMPILE.cc) -g -Iinclude -I../common/include -MMD -MP -MF "$@.d" -o ${OBJECTDIR}/src/tcp_accept.o src/tcp_accept.cc
+
+${OBJECTDIR}/src/tcp_socket.o: src/tcp_socket.cc 
+	${MKDIR} -p ${OBJECTDIR}/src
+	${RM} "$@.d"
+	$(COMPILE.cc) -g -Iinclude -I../common/include -MMD -MP -MF "$@.d" -o ${OBJECTDIR}/src/tcp_socket.o src/tcp_socket.cc
 
 # Subprojects
 .build-subprojects:
