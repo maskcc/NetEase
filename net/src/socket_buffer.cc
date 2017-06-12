@@ -5,7 +5,7 @@
  */
 
 #include "socket_buffer.h"
-
+using namespace easynet;
 SocketBuffer::SocketBuffer(int32_t buff_step) {
     //一个连接到来时先不要为其分配缓冲区, 当需要时按照 buff_step 分配
     //最大缓冲为 1m, 超过肯定是错误, 暂时未做处理内存可以为任意大
@@ -14,6 +14,18 @@ SocketBuffer::SocketBuffer(int32_t buff_step) {
     end_pos_ = 0;
     cur_step_ = 0;
     buff_step_ = buff_step;
+    buffer_ = (uint8_t *) malloc(buffer_size());
+
+}
+
+SocketBuffer::SocketBuffer() {
+    //一个连接到来时先不要为其分配缓冲区, 当需要时按照 buff_step 分配
+    //最大缓冲为 1m, 超过肯定是错误, 暂时未做处理内存可以为任意大
+    max_buff_sz_ = 1024 * 1024;
+    start_pos_ = 0;
+    end_pos_ = 0;
+    cur_step_ = 0;
+    buff_step_ = 512;
     buffer_ = (uint8_t *) malloc(buffer_size());
 
 }

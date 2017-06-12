@@ -9,11 +9,11 @@
 using namespace easynet;
     
 EventLoop::EventLoop(){
-    
+    buffer_ = (uint8_t *) malloc(1024* 4);
 }
 EventLoop::~EventLoop(){
     close(efd_);
-    
+    free(buffer_);
 }
 
 bool EventLoop::initialize(){

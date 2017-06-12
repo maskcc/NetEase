@@ -28,7 +28,8 @@ void TcpAccept::on_message(int32_t events){
     s->attach(id, fd, ip, port);
     LOG(INFO) << "accept ok id:" << id << " fd:" << fd << " remote ip:" << ip << " port:" << port;
     NetErrorCode error;
-    on_accept_(id, nullptr, error);
+    on_accept_(id, s, error);
+    
     
     
 }

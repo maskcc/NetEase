@@ -21,34 +21,39 @@
  * 接收到的数据不能异步处理
  * 处理完数据不需要释放内存
  */
-class SocketBuffer{
-public:
-    SocketBuffer(int32_t max_sz);
-    ~SocketBuffer();
-public:
-    bool put_msg(void *msg, int sz);
-    void* get_msg(int sz);
-    
-protected:
-    bool check_resize(int32_t sz);
-    inline int32_t buffer_size(){
-        return cur_step_ * buff_step_;
-    }
-    inline int32_t free_size(){
-        return buffer_size() - (end_pos_ - start_pos_);
-    }
-private:
-    int32_t max_buff_sz_;
-    int32_t start_pos_;
-    int32_t end_pos_;
-    int32_t cur_step_ ;
-    int32_t buff_step_;
-    uint8_t *buffer_;
-    
-    
-    
-};
+namespace easynet {
 
+    class SocketBuffer {
+    public:
+        SocketBuffer();
+        SocketBuffer(int32_t max_sz);
+        ~SocketBuffer();
+    public:
+        bool put_msg(void *msg, int sz);
+        void* get_msg(int sz);
+
+    protected:
+        bool check_resize(int32_t sz);
+
+        inline int32_t buffer_size() {
+            return cur_step_ * buff_step_;
+        }
+
+        inline int32_t free_size() {
+            return buffer_size() - (end_pos_ - start_pos_);
+        }
+    private:
+        int32_t max_buff_sz_;
+        int32_t start_pos_;
+        int32_t end_pos_;
+        int32_t cur_step_;
+        int32_t buff_step_;
+        uint8_t *buffer_;
+
+
+
+    };
+}
 
 #endif /* SOCKET_BUFFER_H */
 

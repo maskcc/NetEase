@@ -41,6 +41,7 @@ OBJECTFILES= \
 	${OBJECTDIR}/src/event_loop.o \
 	${OBJECTDIR}/src/net_package.o \
 	${OBJECTDIR}/src/safe_queue.o \
+	${OBJECTDIR}/src/socket_buffer.o \
 	${OBJECTDIR}/src/tcp_accept.o \
 	${OBJECTDIR}/src/tcp_socket.o
 
@@ -100,6 +101,11 @@ ${OBJECTDIR}/src/safe_queue.o: src/safe_queue.cc
 	${MKDIR} -p ${OBJECTDIR}/src
 	${RM} "$@.d"
 	$(COMPILE.cc) -g -Iinclude -I../common/include -MMD -MP -MF "$@.d" -o ${OBJECTDIR}/src/safe_queue.o src/safe_queue.cc
+
+${OBJECTDIR}/src/socket_buffer.o: src/socket_buffer.cc 
+	${MKDIR} -p ${OBJECTDIR}/src
+	${RM} "$@.d"
+	$(COMPILE.cc) -g -Iinclude -I../common/include -MMD -MP -MF "$@.d" -o ${OBJECTDIR}/src/socket_buffer.o src/socket_buffer.cc
 
 ${OBJECTDIR}/src/tcp_accept.o: src/tcp_accept.cc 
 	${MKDIR} -p ${OBJECTDIR}/src

@@ -98,7 +98,14 @@ using _OnTimerHandler = std::function<void()>;
     
     class NetErrorCode{
     public:
-        int32_t err_;
+        enum NETERROR{
+            NE_DATA,    //有数据到来
+            NE_CLOSED,  //关闭消息
+            NE_AGAIN,   //再试消息
+            NE_ERROR    //错误消息
+        };
+        NETERROR err_;
+        
     };
     const int32_t MAX_EFD = 1000;
     
@@ -108,8 +115,8 @@ using _OnTimerHandler = std::function<void()>;
     using TcpAcceptPtr = shared_ptr<TcpAccept>;
     class EventLoop;
     using EventLoopPtr = shared_ptr<EventLoop>;
-    using OnAcceptHandler = std::function<void(int32_t /*fd*/,  TcpSocketPtr /*acceptor*/, NetErrorCode&)>;
-    using OnReceiveHandler = std::function<void(int32_t /*fd*/,void*, int32_t sz,  NetErrorCode&)>;
+    using OnAcceptHandler = std::function<void(int32_t /*fd*/,  TcpSocketPtr /*acceptor*/, NetErrorCode)>;
+    using OnReceiveHandler = std::function<void(int32_t /*fd*/,void*, int32_t,  NetErrorCode)>;
    
     
     

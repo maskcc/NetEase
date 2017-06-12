@@ -16,6 +16,8 @@
 
 #include "event_loop.h"
 #include "event_data.h"
+#include "socket_buffer.h"
+
 namespace easynet{
 class TcpSocket  : public enable_shared_from_this<TcpSocket>{
 public:
@@ -36,6 +38,7 @@ protected:
     EventData event_data_;
     EventLoopPtr event_loop_;
     OnReceiveHandler on_receive_;
+    SocketBuffer buff_;
     
 };
 

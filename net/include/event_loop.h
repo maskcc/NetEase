@@ -29,7 +29,10 @@ public:
     // 初始化
     bool initialize();
     void run_once(int timeout);
-    void reg_event(const EventData& ev);  
+    void reg_event(const EventData& ev); 
+    void* get_buffer(){
+        return buffer_;
+    }
     int32_t get_efd() const{
         return efd_;
     }
@@ -43,6 +46,7 @@ private:
     int32_t sock_pair_[2];
     EventData event_data_;
     epoll_event events_[MAX_EVENTS];   //缓存epoll_wait 的事件
+    uint8_t *buffer_;
     
 };
 
