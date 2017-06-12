@@ -23,7 +23,7 @@ public:
     ~TcpSocket();
     
 public:
-    void on_message(int32_t events){};
+    void on_message(int32_t events);
     bool do_connect(){}
     bool do_receive(OnReceiveHandler h);
     void attach(uint64_t id, int32_t fd, std::string ip, int32_t port);

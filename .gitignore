@@ -38,3 +38,5 @@ proto/protocols/*
 /net/build/
 /netease/build/
 /netease/dist/
+bin/
+
