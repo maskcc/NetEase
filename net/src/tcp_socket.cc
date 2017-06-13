@@ -17,7 +17,15 @@ TcpSocket::TcpSocket(EventLoopPtr loop) : event_loop_(loop) {
 TcpSocket::~TcpSocket() {
 
 }
-
+bool TcpSocket::do_connect( std::string ip, int32_t port ){
+    if( false == NetPackage::Connect(event_data_.fd_, ip, port) ){
+        LOG(ERROR) << "connect ip:" << ip << " port:" << port << " fail! error:" << strerror(errno);
+        return false;
+    }
+    return true;
+    
+    
+}
 void TcpSocket::on_message(int32_t events) {
     if( on_receive_ == nullptr ){
         LOG(FATAL) << "receive handler is nullptr!";
@@ -28,7 +36,7 @@ void TcpSocket::on_message(int32_t events) {
         int32_t ret = NetPackage::Read(event_data_.fd_, event_loop_->get_buffer(), MAX_SOCK_BUFF);
         if (0 == ret) {
             //客户端关闭
-            NetPackage::Close(event_data_.fd_);
+            close_conn();
             //客户端回调
             ec.err_ = NetErrorCode::NE_CLOSED;
             f( identify_, nullptr, ret, ec);
@@ -41,7 +49,7 @@ void TcpSocket::on_message(int32_t events) {
                 return;
             } else {
                 LOG(INFO) << "read fail! fd[" << event_data_.fd_ << "] errno[" << errno << "] msg[" << strerror(errno) << "]";
-                NetPackage::Close(event_data_.fd_);
+                close_conn();
                 ec.err_ = NetErrorCode::NE_ERROR;
                 f(identify_, nullptr, ret, ec);
                 return;
@@ -57,8 +65,7 @@ void TcpSocket::on_message(int32_t events) {
 bool TcpSocket::do_receive(OnReceiveHandler h) {
     if (false == event_loop_->ev_control_.add_in_event(event_loop_->get_efd(), event_data_)) {
         LOG(ERROR) << "add receive event fail!";
-        NetPackage::Close(event_data_.fd_);
-        event_data_.status_ = LS_CLOSED;
+        close_conn();
         return false;
     }
     on_receive_ = std::move(h);
@@ -77,4 +84,8 @@ void TcpSocket::attach(uint64_t id, int32_t fd, std::string ip, int32_t port) {
     event_data_.link_type_ = LT_CLIENT;
     event_data_.status_ = LS_ESTABLISHED;
     event_data_.epoll_event_.data.ptr = &event_data_;
+}
+void TcpSocket::close_conn(){
+    NetPackage::Close(event_data_.fd_);
+    event_data_.status_ = LS_CLOSED;    
 }

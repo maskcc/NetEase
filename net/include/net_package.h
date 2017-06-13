@@ -34,7 +34,7 @@ namespace easynet{
             static bool Close(int32_t fd);
             static int32_t Read(int32_t fd, void *buf, int32_t sz);
             static int32_t Write(int32_t fd, const void *buf, int32_t sz);
-            static bool Connect(int *connFD, const std::string& remoteIP, uint16_t remotePort);
+            static bool Connect(int &connFD, const std::string& remoteIP, uint16_t remotePort);
     };
 
 }

@@ -26,9 +26,10 @@ public:
     
 public:
     void on_message(int32_t events);
-    bool do_connect(){}
+    bool do_connect(std::string ip, int32_t port );
     bool do_receive(OnReceiveHandler h);
     void attach(uint64_t id, int32_t fd, std::string ip, int32_t port);
+    void close_conn();
     
 private:
     std::string ip_;

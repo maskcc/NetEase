@@ -115,8 +115,8 @@ using _OnTimerHandler = std::function<void()>;
     using TcpAcceptPtr = shared_ptr<TcpAccept>;
     class EventLoop;
     using EventLoopPtr = shared_ptr<EventLoop>;
-    using OnAcceptHandler = std::function<void(int32_t /*fd*/,  TcpSocketPtr /*acceptor*/, NetErrorCode)>;
-    using OnReceiveHandler = std::function<void(int32_t /*fd*/,void*, int32_t,  NetErrorCode)>;
+    using OnAcceptHandler = std::function<void(int32_t /*fd*/,  TcpSocketPtr /*acceptor*/, NetErrorCode&)>;
+    using OnReceiveHandler = std::function<void(int32_t /*fd*/,void*, int32_t,  NetErrorCode&)>;
    
     
     

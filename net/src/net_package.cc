@@ -139,7 +139,7 @@ using namespace easynet;
         return ::write(fd, buf, sz);
     }
 
-    bool NetPackage::Connect(int *connFD, const std::string& remoteIP, uint16_t remotePort){
+    bool NetPackage::Connect(int &connFD, const std::string& remoteIP, uint16_t remotePort){
         bool isIPV6 = IsIPV6(remoteIP); 
         int32_t fd = kINVALID_FD;
         int32_t ret = -1;
@@ -176,6 +176,6 @@ using namespace easynet;
             return false;
         }
 
-        (*connFD) = fd;
+        connFD = fd;
         return true;
     }
