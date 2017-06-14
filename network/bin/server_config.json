@@ -1,9 +1,0 @@
-{
-	"server_name": "center_svr",
-	"server_id": 177,
-	"port": 30077,
-	"connect":[
-		{"name":"db_svr", "ip":"127.0.0.1", "port":66633},
-		{"name":"gate_svr", "ip":"127.0.0.1", "port":77788}
-	]
-}
