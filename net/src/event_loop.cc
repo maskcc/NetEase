@@ -50,8 +50,9 @@ void EventLoop::run_once(int timeout){
     }    
     //time out 
     {
-        LOG(INFO) << "timeout";
+        
         if( 0 == count ){
+            NET_WORK_STATUS.print_status();
             return;
         }
     }

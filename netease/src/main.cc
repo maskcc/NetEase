@@ -29,6 +29,7 @@ void test1(){
     TcpAcceptPtr accept = make_shared<TcpAccept>(loop);
     auto onreceive = [](int32_t /*fd*/ id,void* data, int32_t sz,  NetErrorCode& e){
         LOG(INFO) << "id:" << id << " sz:" << sz << " code:" << e.err_;
+        //sleep(1);//模拟慢接收的客户端
     };
     auto onacc = [&onreceive](int32_t id, TcpSocketPtr sock, NetErrorCode& e){
         LOG(INFO) << "connected";
@@ -38,11 +39,18 @@ void test1(){
     accept->do_accept(10011, onacc);
     TcpAcceptPtr accept2 = make_shared<TcpAccept>(loop);
     accept2->do_accept(10012, onacc);
-    TcpSocketPtr sk = make_shared<TcpSocket>(loop);
-    sk->do_connect("127.0.0.1", 10011);
-    sk->do_receive(onreceive);
+    
     while(true)
         loop->run_once(5 * 1000);
+    
+    
+    //TcpSocketPtr sk = make_shared<TcpSocket>(loop);
+    //sk->do_connect("127.0.0.1", 10011);
+    //char* msg = "nmshuodedui!";
+    //if( sk->send_msg(msg, 13) ){
+    //    LOG(INFO) << "send msg success";
+    //}
+    //sk->do_receive(onreceive);
     
 }
 

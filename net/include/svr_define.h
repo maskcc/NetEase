@@ -41,7 +41,7 @@
 
 #include "net_package.h"
 #include "log.h"
-
+#include "status.h"
 
 namespace easynet{
 
@@ -118,6 +118,7 @@ using _OnTimerHandler = std::function<void()>;
     using OnAcceptHandler = std::function<void(int32_t /*fd*/,  TcpSocketPtr /*acceptor*/, NetErrorCode&)>;
     using OnReceiveHandler = std::function<void(int32_t /*fd*/,void*, int32_t,  NetErrorCode&)>;
    
+    static NetWorkStatus NET_WORK_STATUS;
     
     
  

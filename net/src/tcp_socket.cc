@@ -17,18 +17,25 @@ TcpSocket::TcpSocket(EventLoopPtr loop) : event_loop_(loop) {
 TcpSocket::~TcpSocket() {
 
 }
-bool TcpSocket::do_connect( std::string ip, int32_t port ){
-    if( false == NetPackage::Connect(event_data_.fd_, ip, port) ){
+
+bool TcpSocket::do_connect(std::string ip, int32_t port) {
+    if (false == NetPackage::Connect(event_data_.fd_, ip, port)) {
         LOG(ERROR) << "connect ip:" << ip << " port:" << port << " fail! error:" << strerror(errno);
         return false;
     }
+    this->attach(next_id(), event_data_.fd_, ip, port);
     return true;
-    
-    
+
+
 }
+
 void TcpSocket::on_message(int32_t events) {
-    if( on_receive_ == nullptr ){
+    if (on_receive_ == nullptr) {
         LOG(FATAL) << "receive handler is nullptr!";
+    }
+    if (event_data_.status_ != LS_ESTABLISHED) {
+        LOG(ERROR) << "status not right! status:" << event_data_.status_;
+        return;
     }
     auto f = on_receive_;
     NetErrorCode ec;
@@ -39,13 +46,13 @@ void TcpSocket::on_message(int32_t events) {
             close_conn();
             //客户端回调
             ec.err_ = NetErrorCode::NE_CLOSED;
-            f( identify_, nullptr, ret, ec);
+            f(identify_, nullptr, ret, ec);
             return;
         }
         if (ret < 0) {
             if (EAGAIN == errno || EWOULDBLOCK == errno) {
                 ec.err_ = NetErrorCode::NE_AGAIN;
-                f( identify_, nullptr, ret, ec);
+                f(identify_, nullptr, ret, ec);
                 return;
             } else {
                 LOG(INFO) << "read fail! fd[" << event_data_.fd_ << "] errno[" << errno << "] msg[" << strerror(errno) << "]";
@@ -55,10 +62,34 @@ void TcpSocket::on_message(int32_t events) {
                 return;
             }
         }
+        NET_WORK_STATUS.add_receive_packet( ret );
         ec.err_ = NetErrorCode::NE_DATA;
         f(identify_, event_loop_->get_buffer(), ret, ec);
         return;
     }
+
+}
+
+// 同步发送消息
+bool TcpSocket::send_msg(void* msg, int32_t sz) {
+    unsigned char* pPos = (unsigned char*)msg;
+    int32_t sendcnt = 0;
+    int32_t leftcnt = sz;
+    while (leftcnt > 0) {
+        sendcnt = NetPackage::Write(event_data_.fd_, pPos, leftcnt);
+        if (sendcnt < 0) {
+            if (EAGAIN == errno || EWOULDBLOCK == errno) {
+                continue;
+            } else {
+                return false;
+            }
+        }
+        leftcnt -= sendcnt;
+        pPos += sendcnt;
+    }
+    NET_WORK_STATUS.add_send_packet(sz);
+    return true;
+
 
 }
 
@@ -85,7 +116,12 @@ void TcpSocket::attach(uint64_t id, int32_t fd, std::string ip, int32_t port) {
     event_data_.status_ = LS_ESTABLISHED;
     event_data_.epoll_event_.data.ptr = &event_data_;
 }
-void TcpSocket::close_conn(){
+
+void TcpSocket::close_conn() {
+    if ( false == event_loop_->ev_control_.remove_in_event(event_loop_->get_efd(), event_data_)){
+        LOG(ERROR) << "remove event fail!";        
+    }
     NetPackage::Close(event_data_.fd_);
-    event_data_.status_ = LS_CLOSED;    
+    event_data_.status_ = LS_CLOSED;
+    NET_WORK_STATUS.del_online_count();
 }
