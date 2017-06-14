@@ -39,4 +39,6 @@ proto/protocols/*
 /netease/build/
 /netease/dist/
 bin/
+nbproject/
+objs/
 
