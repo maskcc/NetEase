@@ -9,7 +9,7 @@ inc_path := -I./include -I../net/include -I../common/include
 libs = -lpthread -lrt -lnsl -lgcc_s -lnet -lglog
 target_path := ./bin
 target := netease.run
-obj_path:= ../objs/$(target)
+obj_path:= ../../objs/$(target)
 
 
 srcs := $(wildcard $(src_path)/*.$(CC))
