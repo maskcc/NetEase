@@ -62,7 +62,7 @@ void TcpSocket::on_message(int32_t events) {
                 return;
             }
         }
-        NET_WORK_STATUS.add_receive_packet( ret );
+        NetWorkStatus::add_receive_packet( ret );
         ec.err_ = NetErrorCode::NE_DATA;
         f(identify_, event_loop_->get_buffer(), ret, ec);
         return;
@@ -87,7 +87,7 @@ bool TcpSocket::send_msg(void* msg, int32_t sz) {
         leftcnt -= sendcnt;
         pPos += sendcnt;
     }
-    NET_WORK_STATUS.add_send_packet(sz);
+    NetWorkStatus::add_send_packet(sz);
     return true;
 
 
@@ -123,5 +123,5 @@ void TcpSocket::close_conn() {
     }
     NetPackage::Close(event_data_.fd_);
     event_data_.status_ = LS_CLOSED;
-    NET_WORK_STATUS.del_online_count();
+    NetWorkStatus::del_online_count();
 }

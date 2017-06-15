@@ -29,7 +29,7 @@ void TcpAccept::on_message(int32_t events){
     LOG(INFO) << "accept ok id:" << id << " fd:" << fd << " remote ip:" << ip << " port:" << port;
     NetErrorCode error;
     on_accept_(id, s, error);
-    NET_WORK_STATUS.add_online_count();
+    NetWorkStatus::add_online_count();
     
     
     
