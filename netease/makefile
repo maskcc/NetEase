@@ -5,7 +5,7 @@ CC := cc
 CXXFLAGS := -g -D_REENTRANT -DDEBUG -std=c++11 -fPIC
 src_path := src
 lib_path := -L../lib
-inc_path := -I./include -I../net/include -I../common/include
+inc_path := -I./include -I../net/include -I../common/include -I../../third/rapidjson/include
 libs = -lpthread -lrt -lnsl -lgcc_s -lnet -lglog
 target_path := ./bin
 target := netease.run

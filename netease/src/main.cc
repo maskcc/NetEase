@@ -15,6 +15,7 @@
 #include <cstdlib>
 #include "event_loop.h"
 #include "socket_buffer.h"
+#include "net_ease.h"
 using namespace std;
 
 using namespace easynet;
@@ -92,8 +93,10 @@ void test_buffer(){
     
 }
 int main(int argc, char** argv) {
-    test1();
+    //test1();
     //test_buffer();
+    NetEase *p = new NetEase();
+    p->start();
     return 0;
 }
 
