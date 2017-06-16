@@ -30,7 +30,7 @@ public:
     bool do_receive(OnReceiveHandler h);
     bool send_msg(void* msg, int32_t sz);
     void attach(uint64_t id, int32_t fd, std::string ip, int32_t port);
-    void close_conn();
+    void close_conn();   
     
 private:
     std::string ip_;

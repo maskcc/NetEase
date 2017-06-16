@@ -52,19 +52,43 @@ TcpSocketPtr NetEase::connect_server(const std::string& name){
         LOG(ERROR) << "connect ip:" << conf->ip_ << " port:" << conf->port_ << " fail";
         return nullptr;
     }
-    auto receive = [this](int32_t fd,void* buff, int32_t sz,  NetErrorCode& code){
-        this->on_receive(fd, buff, sz, code);
+    auto receive = [this](int32_t id,void* buff, int32_t sz,  NetErrorCode& code){
+        this->on_receive(id, buff, sz, code);
     };
     tc->do_receive(std::move(receive));
     return tc;
     
     
 }
-void NetEase::on_accept(int32_t /*fd*/,  TcpSocketPtr /*acceptor*/, NetErrorCode&){
+void NetEase::on_accept(int32_t id,  TcpSocketPtr sock, NetErrorCode&){
+    if( nullptr == sock ){
+        LOG(ERROR) << "sock is nullptr";
+    }
+    auto receive = [this](int32_t id,void* buff, int32_t sz,  NetErrorCode& code){
+        this->on_receive(id, buff, sz, code);
+    };    
+    
+    sock->do_receive(receive);
+    IPlayerPtr player = create_player(sock);
+    
+}
+void NetEase::on_receive(int32_t id,void* buff, int32_t sz,  NetErrorCode& code){
+    if( code.err_ == NetErrorCode::NE_CLOSED ){
+        
+        return;
+    }
+    if( code.err_ == NetErrorCode::NE_ERROR ){
+        
+        return;
+    }
+     if( code.err_ == NetErrorCode::NE_DATA ){
+        receiver_.on_receive(id, buff, sz);
+        return;
+    }
     
     
 }
-void NetEase::on_receive(int32_t fd,void* buff, int32_t sz,  NetErrorCode& code){
-    
-    
+
+IPlayerPtr NetEase::create_player(TcpSocketPtr s){
+    return std::make_shared<IPlayer>(s);
 }

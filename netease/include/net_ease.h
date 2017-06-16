@@ -21,6 +21,8 @@
 #include "config_loader.h"
 #include "receiver.h"
 
+#include "iplayer.h"
+
 using namespace easynet;
 class NetEase{
 public:
@@ -32,8 +34,12 @@ public:
     void init();    
     void start();
     TcpSocketPtr connect_server(const std::string& name);
-    void on_accept(int32_t fd,  TcpSocketPtr ts, NetErrorCode& code);
-    void on_receive(int32_t fd,void* buff, int32_t sz,  NetErrorCode& code);
+    void on_accept(int32_t id,  TcpSocketPtr ts, NetErrorCode& code);
+    void on_receive(int32_t id,void* buff, int32_t sz,  NetErrorCode& code);
+    
+protected:
+    //使用者的连接用户
+    virtual IPlayerPtr create_player(TcpSocketPtr s);
 private:
     ConfigLoader::ServerInfoPtr config_;
     EventLoopPtr event_loop_;

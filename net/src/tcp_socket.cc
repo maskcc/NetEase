@@ -10,7 +10,7 @@
 using namespace easynet;
 
 TcpSocket::TcpSocket(EventLoopPtr loop) : event_loop_(loop) {
-
+    
 
 }
 
@@ -72,6 +72,10 @@ void TcpSocket::on_message(int32_t events) {
 
 // 同步发送消息
 bool TcpSocket::send_msg(void* msg, int32_t sz) {
+    if( event_data_.status_ != LS_ESTABLISHED){
+        LOG(ERROR) << "send msg fail, client is not established!";
+        return false;
+    }
     unsigned char* pPos = (unsigned char*)msg;
     int32_t sendcnt = 0;
     int32_t leftcnt = sz;
